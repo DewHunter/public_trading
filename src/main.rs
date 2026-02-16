@@ -1,7 +1,4 @@
-use public_trading::{
-    creds::Creds,
-    public::{Instrument, InstrumentType, PublicClient},
-};
+use public_trading::public::PublicClient;
 use tracing::{Level, error, info};
 use tracing_subscriber;
 
@@ -17,29 +14,23 @@ async fn main() {
 
     info!("Public Trading");
 
-    let mut public_creds = Creds::new();
-    match public_creds.refresh() {
-        Ok(()) => {}
-        Err(e) => error!("Problem with creds: {e}"),
-    }
+    let mut client = match PublicClient::new() {
+        Ok(client) => client,
+        Err(e) => {
+            error!("Failed to create client: {e:?}");
+            return;
+        }
+    };
 
-    // let mut client = match PublicClient::new() {
-    //     Ok(client) => client,
-    //     Err(e) => {
-    //         error!("Failed to create client: {e:?}");
-    //         return;
-    //     }
-    // };
-
-    // match client.set_account("BROKERAGE").await {
-    //     Ok(()) => {
-    //         info!("Successfully set account type to BROKERAGE");
-    //     }
-    //     Err(e) => {
-    //         error!("Client error: {e:?}");
-    //         return;
-    //     }
-    // };
+    match client.set_account("BROKERAGE").await {
+        Ok(()) => {
+            info!("Successfully set account type to BROKERAGE");
+        }
+        Err(e) => {
+            error!("Client error: {e:?}");
+            return;
+        }
+    };
 
     // let symbol = Instrument {
     //     symbol: "LMND".to_string(),

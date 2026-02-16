@@ -7,14 +7,14 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::env;
-use tracing::{debug, error};
+use std::{cell::RefCell, rc::Rc};
+use tracing::{debug, error, info};
 
 pub struct PublicClient {
     client: Client,
     base_url: Url,
     account_id: Option<String>,
-    creds: Creds,
+    creds: Rc<RefCell<Creds>>,
 }
 
 #[derive(Debug)]
@@ -33,7 +33,7 @@ pub struct ServiceErrorMsg {
     message: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct PersonalTokenResponse {
     access_token: String,
@@ -180,7 +180,7 @@ impl PublicClient {
             client,
             base_url: PUBLIC_API.parse().unwrap(),
             account_id: None,
-            creds: Creds::new(),
+            creds: Rc::new(RefCell::new(Creds::new())),
         })
     }
 
@@ -254,7 +254,7 @@ impl PublicClient {
     async fn create_personal_token(
         &self,
         public_secret: String,
-        request_ttl: i32,
+        request_ttl: i64,
     ) -> Result<String, PublicError> {
         let uri = self.make_uri("/userapiauthservice/personal/access-tokens")?;
         let payload = json!({
@@ -275,13 +275,23 @@ impl PublicClient {
         Ok(data.access_token)
     }
 
-    async fn access_token(&self) -> Result<&str, PublicError> {
-        match self.creds.access_token() {
-            Some(token) => return Ok(token),
-            None => {}
+    async fn access_token(&self) -> Result<String, PublicError> {
+        if let Some(token) = self.creds.borrow().access_token() {
+            return Ok(token.to_string());
         }
+        info!("Generating a new public token");
 
-        Ok(&String::new())
+        let public_secret = self.creds.borrow().public_secret().await.map_err(|e| {
+            error!("Missing public secret: {e}");
+            PublicError::MissingCredentials
+        })?;
+
+        let public_token = self
+            .create_personal_token(public_secret, self.creds.borrow().ttl())
+            .await?;
+        self.creds.borrow_mut().refresh(public_token.as_str());
+
+        Ok(public_token)
     }
 
     pub async fn get_accounts(&self) -> Result<Vec<Account>, PublicError> {

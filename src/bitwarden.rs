@@ -5,17 +5,18 @@ use bitwarden::secrets_manager::secrets::{
 use bitwarden::{Client, auth::login::AccessTokenLoginRequest, secrets_manager::ClientSecretsExt};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::fs;
+use std::path::PathBuf;
+use std::{env, fs};
 use tracing::debug;
 use uuid::Uuid;
 
-const BITWARDEN_CONFIG: &str = "~/.bw.json";
+const BITWARDEN_CONFIG: &str = ".bw.json";
 
 #[derive(Deserialize)]
 struct BitwardenCreds {
     access_token: String,
     org_id: Uuid,
-    project_id: Uuid,
+    // project_id: Uuid,
 }
 
 pub struct Bitwarden {
@@ -74,7 +75,9 @@ impl Bitwarden {
 }
 
 fn load_bw_creds_from_file() -> Result<BitwardenCreds> {
-    let bitwarden_data = fs::read_to_string(BITWARDEN_CONFIG)?;
+    let home_dir = env::home_dir().unwrap_or(PathBuf::new());
+    let bw_config = home_dir.join(PathBuf::from(BITWARDEN_CONFIG));
+    let bitwarden_data = fs::read_to_string(bw_config)?;
     let config: BitwardenCreds = serde_json::from_str(&bitwarden_data)?;
     Ok(config)
 }
