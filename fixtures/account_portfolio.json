@@ -1,0 +1,398 @@
+{
+  "accountId": "6LEOTEST5",
+  "accountType": "BROKERAGE",
+  "buyingPower": {
+    "cashOnlyBuyingPower": "14176.48",
+    "buyingPower": "459879.64",
+    "optionsBuyingPower": "229939.82"
+  },
+  "equity": [
+    { "type": "STOCK", "value": "370613.14", "percentageOfPortfolio": "96.32" },
+    { "type": "CASH", "value": "14176.48", "percentageOfPortfolio": "3.68" }
+  ],
+  "positions": [
+    {
+      "instrument": {
+        "symbol": "RIVN",
+        "name": "Rivian Automotive",
+        "type": "EQUITY"
+      },
+      "quantity": "2409",
+      "openedAt": "2021-11-10T21:00:00Z",
+      "currentValue": "42794.92",
+      "percentOfPortfolio": "11.12",
+      "lastPrice": {
+        "lastPrice": "17.76",
+        "timestamp": "2026-02-14T00:59:54Z"
+      },
+      "instrumentGain": {
+        "gainValue": "3.76",
+        "gainPercentage": "26.89",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "9068.92",
+        "gainPercentage": "26.89",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "32702.31",
+        "unitCost": "13.58",
+        "gainValue": "10092.61",
+        "gainPercentage": "30.86",
+        "lastUpdate": "2026-01-16T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "NFLX", "name": "Netflix", "type": "EQUITY" },
+      "quantity": "5",
+      "openedAt": "2025-12-09T21:00:00Z",
+      "currentValue": "384.73",
+      "percentOfPortfolio": "0.10",
+      "lastPrice": {
+        "lastPrice": "76.94",
+        "timestamp": "2026-02-14T00:59:57Z"
+      },
+      "instrumentGain": {
+        "gainValue": "1.08",
+        "gainPercentage": "1.43",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "5.42",
+        "gainPercentage": "1.43",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "483.00",
+        "unitCost": "96.60",
+        "gainValue": "-98.28",
+        "gainPercentage": "-20.35",
+        "lastUpdate": "2025-12-09T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "XYZ", "name": "Block Inc", "type": "EQUITY" },
+      "quantity": "310",
+      "openedAt": "2026-01-12T21:00:00Z",
+      "currentValue": "15462.83",
+      "percentOfPortfolio": "4.02",
+      "lastPrice": {
+        "lastPrice": "49.88",
+        "timestamp": "2026-02-14T00:59:48Z"
+      },
+      "instrumentGain": {
+        "gainValue": "0.79",
+        "gainPercentage": "1.61",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "244.93",
+        "gainPercentage": "1.61",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "18361.27",
+        "unitCost": "59.23",
+        "gainValue": "-2898.44",
+        "gainPercentage": "-15.79",
+        "lastUpdate": "2026-02-06T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "AMZN", "name": "Amazon", "type": "EQUITY" },
+      "quantity": "400",
+      "openedAt": "2020-08-03T20:00:00Z",
+      "currentValue": "79583.92",
+      "percentOfPortfolio": "20.68",
+      "lastPrice": {
+        "lastPrice": "198.96",
+        "timestamp": "2026-02-14T00:59:59Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-0.64",
+        "gainPercentage": "-0.32",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-256.08",
+        "gainPercentage": "-0.32",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "76915.83",
+        "unitCost": "192.29",
+        "gainValue": "2668.09",
+        "gainPercentage": "3.47",
+        "lastUpdate": "2026-02-06T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "GPRO", "name": "GoPro", "type": "EQUITY" },
+      "quantity": "2000",
+      "openedAt": "2025-01-30T21:00:00Z",
+      "currentValue": "1740.20",
+      "percentOfPortfolio": "0.45",
+      "lastPrice": {
+        "lastPrice": "0.8701",
+        "timestamp": "2026-02-14T00:56:49Z"
+      },
+      "instrumentGain": {
+        "gainValue": "0.01",
+        "gainPercentage": "1.36",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "23.40",
+        "gainPercentage": "1.36",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "2614.14",
+        "unitCost": "1.31",
+        "gainValue": "-873.94",
+        "gainPercentage": "-33.43",
+        "lastUpdate": "2025-11-18T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "LMND", "name": "Lemonade", "type": "EQUITY" },
+      "quantity": "1653",
+      "openedAt": "2021-04-29T20:00:00Z",
+      "currentValue": "105775.47",
+      "percentOfPortfolio": "27.49",
+      "lastPrice": {
+        "lastPrice": "63.99",
+        "timestamp": "2026-02-14T00:59:52Z"
+      },
+      "instrumentGain": {
+        "gainValue": "2.03",
+        "gainPercentage": "3.28",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "3355.59",
+        "gainPercentage": "3.28",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "39224.92",
+        "unitCost": "23.73",
+        "gainValue": "66550.55",
+        "gainPercentage": "169.66",
+        "lastUpdate": "2025-10-21T20:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "GOOG", "name": "Alphabet", "type": "EQUITY" },
+      "quantity": "5",
+      "openedAt": "2025-12-01T21:00:00Z",
+      "currentValue": "1529.40",
+      "percentOfPortfolio": "0.40",
+      "lastPrice": {
+        "lastPrice": "305.88",
+        "timestamp": "2026-02-14T00:59:56Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-3.49",
+        "gainPercentage": "-1.13",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-17.45",
+        "gainPercentage": "-1.13",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "1589.35",
+        "unitCost": "317.87",
+        "gainValue": "-59.95",
+        "gainPercentage": "-3.77",
+        "lastUpdate": "2025-12-01T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "AERO",
+        "name": "Grupo Aeromexico SAB de CV",
+        "type": "EQUITY"
+      },
+      "quantity": "10",
+      "openedAt": "2025-11-25T21:00:00Z",
+      "currentValue": "183.70",
+      "percentOfPortfolio": "0.05",
+      "lastPrice": {
+        "lastPrice": "18.37",
+        "timestamp": "2026-02-14T00:44:38Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-0.13",
+        "gainPercentage": "-0.70",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-1.30",
+        "gainPercentage": "-0.70",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "177.00",
+        "unitCost": "17.70",
+        "gainValue": "6.70",
+        "gainPercentage": "3.79",
+        "lastUpdate": "2025-11-25T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "QS",
+        "name": "QuantumScape",
+        "type": "EQUITY"
+      },
+      "quantity": "500",
+      "openedAt": "2025-11-10T21:00:00Z",
+      "currentValue": "3862.50",
+      "percentOfPortfolio": "1.00",
+      "lastPrice": { "lastPrice": "7.72", "timestamp": "2026-02-14T00:59:23Z" },
+      "instrumentGain": {
+        "gainValue": "-0.04",
+        "gainPercentage": "-0.52",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-20.00",
+        "gainPercentage": "-0.52",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "7754.00",
+        "unitCost": "15.51",
+        "gainValue": "-3891.50",
+        "gainPercentage": "-50.19",
+        "lastUpdate": "2025-11-10T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "SLDP",
+        "name": "Solid Power",
+        "type": "EQUITY"
+      },
+      "quantity": "2950",
+      "openedAt": "2025-11-10T21:00:00Z",
+      "currentValue": "10915.00",
+      "percentOfPortfolio": "2.84",
+      "lastPrice": { "lastPrice": "3.70", "timestamp": "2026-02-14T00:48:09Z" },
+      "instrumentGain": {
+        "gainValue": "0.10",
+        "gainPercentage": "2.78",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "295.00",
+        "gainPercentage": "2.78",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "20975.56",
+        "unitCost": "7.11",
+        "gainValue": "-10060.56",
+        "gainPercentage": "-47.96",
+        "lastUpdate": "2025-12-15T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "MU",
+        "name": "Micron Technology",
+        "type": "EQUITY"
+      },
+      "quantity": "80",
+      "openedAt": "2022-12-15T21:00:00Z",
+      "currentValue": "32768.00",
+      "percentOfPortfolio": "8.52",
+      "lastPrice": {
+        "lastPrice": "409.60",
+        "timestamp": "2026-02-14T00:59:59Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-4.37",
+        "gainPercentage": "-1.06",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-349.60",
+        "gainPercentage": "-1.06",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "15633.46",
+        "unitCost": "195.42",
+        "gainValue": "17134.54",
+        "gainPercentage": "109.60",
+        "lastUpdate": "2026-02-03T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "COF",
+        "name": "Capital One",
+        "type": "EQUITY"
+      },
+      "quantity": "100",
+      "openedAt": "2020-08-03T20:00:00Z",
+      "currentValue": "20748.47",
+      "percentOfPortfolio": "5.39",
+      "lastPrice": {
+        "lastPrice": "207.48",
+        "timestamp": "2026-02-14T00:56:37Z"
+      },
+      "instrumentGain": {
+        "gainValue": "0.59",
+        "gainPercentage": "0.29",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "59.47",
+        "gainPercentage": "0.29",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "12371.73",
+        "unitCost": "123.72",
+        "gainValue": "8376.74",
+        "gainPercentage": "67.71",
+        "lastUpdate": "2025-03-03T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "NVDA", "name": "NVIDIA", "type": "EQUITY" },
+      "quantity": "300",
+      "openedAt": "2017-09-05T20:00:00Z",
+      "currentValue": "54864.00",
+      "percentOfPortfolio": "14.26",
+      "lastPrice": {
+        "lastPrice": "182.88",
+        "timestamp": "2026-02-14T00:59:59Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-4.06",
+        "gainPercentage": "-2.17",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-1218.00",
+        "gainPercentage": "-2.17",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "11709.82",
+        "unitCost": "39.03",
+        "gainValue": "43154.18",
+        "gainPercentage": "368.53",
+        "lastUpdate": "2025-04-17T20:00:00Z"
+      }
+    }
+  ],
+  "orders": []
+}

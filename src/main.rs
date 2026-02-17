@@ -32,6 +32,18 @@ async fn main() {
         }
     };
 
+    match client.get_account_portfolio().await {
+        Ok(portfolio) => {
+            info!("Account Portfolio full output:");
+            let portfolio_str = serde_json::to_string(&portfolio).unwrap();
+            println!("{portfolio_str}");
+        }
+        Err(e) => {
+            error!("Client error: {e:?}");
+            return;
+        }
+    }
+
     // let symbol = Instrument {
     //     symbol: "LMND".to_string(),
     //     itype: InstrumentType::EQUITY,
