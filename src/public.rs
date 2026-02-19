@@ -97,6 +97,7 @@ pub enum EquityType {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Equity {
     #[serde(rename = "type")]
     pub equity_type: EquityType,
@@ -105,19 +106,22 @@ pub struct Equity {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LastPrice {
     pub last_price: String,
     pub timestamp: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DailyGain {
     pub gain_value: String,
     pub gain_percentage: String,
     pub timestamp: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CostBasis {
     pub total_cost: String,
     pub unit_cost: String,
@@ -127,6 +131,7 @@ pub struct CostBasis {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Position {
     pub instrument: Instrument,
     pub quantity: String,
@@ -137,6 +142,12 @@ pub struct Position {
     pub instrument_gain: Option<DailyGain>,
     pub position_daily_gain: Option<DailyGain>,
     pub cost_basis: Option<CostBasis>,
+}
+
+impl Position {
+    pub fn is_option(&self) -> bool {
+        self.instrument.instrument_type == InstrumentType::OPTION
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -215,7 +226,7 @@ pub struct Order {
     pub reject_reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum InstrumentType {
     EQUITY,
@@ -233,7 +244,7 @@ pub struct Instrument {
     pub symbol: String,
     pub name: Option<String>,
     #[serde(rename = "type")]
-    pub itype: InstrumentType,
+    pub instrument_type: InstrumentType,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -563,8 +574,8 @@ mod tests {
     use super::*;
     use std::include_str;
 
-    const ACCOUNT_PORTFOLIO: &str = include_str!("../fixtures/account_portfolio.json");
-    const OPTION_CHAIN: &str = include_str!("../fixtures/option_chain.json");
+    const ACCOUNT_PORTFOLIO: &str = include_str!("fixtures/account_portfolio.json");
+    const OPTION_CHAIN: &str = include_str!("fixtures/option_chain.json");
 
     #[test]
     fn test_parse_option_chain() {

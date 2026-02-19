@@ -5,15 +5,18 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
+aws-config = { version = "1.8.14", features = ["behavior-version-latest"] }
+aws-sdk-cloudwatchlogs = "1.118.0"
 base64 = "0.22.1"
-# The Version of bitwarden published on crates.io is too old
-bitwarden = { git = "https://github.com/bitwarden/sdk.git" }
+bitwarden = "2.0.0"
 chrono = { version = "0.4.42", features = ["serde"] }
 ratatui = "0.30.0"
 reqwest = { version = "0.12", features = ["json"] }
+rustls = "0.23.36"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
+tracing-cloudwatch = {version = "0.3.1", features = ["awssdk"]}
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = "1.20.0"

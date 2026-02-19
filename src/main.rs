@@ -1,16 +1,15 @@
-use public_trading::public::PublicClient;
-use tracing::{Level, error, info};
+use std::time::Duration;
+
+use public_trading::{options::OptionsStopper, public::PublicClient};
+use rustls::crypto::CryptoProvider;
+use tokio::time::sleep;
+use tracing::{error, info};
 use tracing_subscriber;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
-        .with_target(true)
-        .with_thread_names(true)
-        .with_level(true)
-        .with_line_number(true)
-        .init();
+    setup_cw_logs("public_trading/service", "dellxpslaptop_server").await;
 
     info!("Public Trading");
 
@@ -32,17 +31,16 @@ async fn main() {
         }
     };
 
-    match client.get_account_portfolio().await {
-        Ok(portfolio) => {
-            info!("Account Portfolio full output:");
-            let portfolio_str = serde_json::to_string(&portfolio).unwrap();
-            println!("{portfolio_str}");
-        }
+    let opstop = OptionsStopper::new(client);
+    match opstop.run().await {
+        Ok(()) => {}
         Err(e) => {
-            error!("Client error: {e:?}");
-            return;
+            error!("Options Stopper error: {e:?}");
         }
     }
+
+    info!("Sleeping for log collection");
+    sleep(Duration::from_secs(30)).await;
 
     // let symbol = Instrument {
     //     symbol: "LMND".to_string(),
@@ -74,4 +72,39 @@ async fn main() {
     //         return;
     //     }
     // }
+}
+
+// tracing_subscriber::fmt()
+//     .with_max_level(Level::DEBUG)
+//     .with_target(true)
+//     .with_thread_names(true)
+//     .with_level(true)
+//     .with_line_number(true)
+//     .init();
+
+async fn setup_cw_logs(log_group: &str, stream_name: &str) {
+    CryptoProvider::install_default(rustls::crypto::aws_lc_rs::default_provider())
+        .expect("Failed to install default crypto provider");
+    let aws_config = aws_config::load_from_env().await;
+    let cw = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
+
+    tracing_subscriber::registry::Registry::default()
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_target(true)
+                .with_thread_names(true)
+                .with_level(true)
+                .with_line_number(true),
+        )
+        .with(
+            tracing_cloudwatch::layer().with_client(
+                cw,
+                tracing_cloudwatch::ExportConfig::default()
+                    .with_batch_size(5)
+                    .with_interval(std::time::Duration::from_secs(1))
+                    .with_log_group_name(log_group)
+                    .with_log_stream_name(stream_name),
+            ),
+        )
+        .init();
 }

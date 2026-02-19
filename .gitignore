@@ -1,3 +1,5 @@
 /target
 bitwarden_config.json
 public.json
+.terraform
+Cargo.lock
