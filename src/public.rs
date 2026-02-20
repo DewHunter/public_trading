@@ -3,11 +3,11 @@ use crate::creds::Creds;
 use super::PUBLIC_API;
 use reqwest::{
     Client, Response, Url,
-    header::{ACCEPT, AUTHORIZATION},
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use std::{cell::RefCell, rc::Rc};
+use serde_json::{Value, json};
+use std::{cell::RefCell, rc::Rc, str::FromStr};
 use tracing::{debug, error, info};
 
 pub struct PublicClient {
@@ -48,6 +48,35 @@ pub enum AccountType {
     TREASURY,
     TRADITIONAL_IRA,
     ROTH_IRA,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub enum OptionType {
+    CALL,
+    PUT,
+}
+
+impl std::fmt::Display for OptionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            Self::CALL => write!(f, "Call"),
+            Self::PUT => write!(f, "Put"),
+        }
+    }
+}
+
+impl FromStr for OptionType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<OptionType, ()> {
+        match s {
+            "Call" => Ok(OptionType::CALL),
+            "CALL" => Ok(OptionType::CALL),
+            "Put" => Ok(OptionType::PUT),
+            "PUT" => Ok(OptionType::PUT),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -248,10 +277,16 @@ pub struct Instrument {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub enum QuoteOutcome {
+    SUCCESS,
+    UNKNOWN,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Quote {
     pub instrument: Instrument,
-    pub outcome: String,
+    pub outcome: QuoteOutcome,
     pub last: String,
     pub last_timestamp: String,
     pub bid: String,
@@ -312,6 +347,102 @@ pub struct OptionGreeks {
     vega: String,
     rho: String,
     implied_volatility: String,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub enum MarketSession {
+    #[default]
+    CORE,
+    EXTENDED,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreflightSingleLegRequest {
+    pub instrument: Instrument,
+    pub order_side: OrderSide,
+    pub order_type: OrderType,
+    pub expiration: Expiration,
+    pub quantity: Option<String>,
+    pub amount: Option<String>,
+    pub limit_price: Option<String>,
+    pub stop_price: Option<String>,
+    pub equity_market_session: MarketSession,
+    pub open_close_indicator: Option<OPIndicator>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegulatoryFees {
+    pub sec_fee: Option<String>,
+    pub taf_fee: Option<String>,
+    pub orf_fee: Option<String>,
+    pub exchange_fee: Option<String>,
+    pub occ_fee: Option<String>,
+    pub cat_fee: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OptionDetails {
+    pub base_symbol: String,
+    #[serde(rename = "type")]
+    pub option_type: OptionType,
+    pub strike_price: String,
+    pub option_expire_date: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EstimatedOrderRebate {
+    pub estimated_option_rebate: Option<String>,
+    pub option_rebate_percent: Option<String>,
+    pub per_contract_rebate: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MarginRequirement {
+    pub long_maintenance_requirement: Option<String>,
+    pub long_initial_requirement: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MarginImpact {
+    pub margin_usage_impact: Option<String>,
+    pub initial_margin_requirement: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PriceIncrement {
+    pub increment_below_3: Option<String>,
+    pub increment_above_3: Option<String>,
+    pub current_increment: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreflightSingleLegResponse {
+    pub instrument: Instrument,
+    pub cusip: Option<String>,
+    pub root_symbol: Option<String>,
+    pub root_options_symbol: Option<String>,
+    pub estimated_commission: Option<String>,
+    pub regulatory_fees: Option<RegulatoryFees>,
+    pub estimated_index_option_fee: Option<String>,
+    pub estimated_execution_fee: Option<String>,
+    pub order_value: String,
+    pub estimated_quantity: Option<String>,
+    pub estimated_cost: Option<String>,
+    pub buying_power_requirement: Option<String>,
+    pub estimated_proceeds: Option<String>,
+    pub option_details: Option<OptionDetails>,
+    pub estimated_order_rebate: Option<EstimatedOrderRebate>,
+    pub margin_requirement: Option<MarginRequirement>,
+    pub margin_impact: Option<MarginImpact>,
+    pub price_increment: Option<PriceIncrement>,
 }
 
 macro_rules! account_id {
@@ -437,7 +568,7 @@ impl PublicClient {
         let response = self
             .client
             .post(uri)
-            // .header(CONTENT_TYPE, "application/json")
+            .header(CONTENT_TYPE, "application/json")
             .json(&payload)
             .send()
             .await;
@@ -541,6 +672,34 @@ impl PublicClient {
         let greeks = response!(OptionGreeks, res);
 
         Ok(greeks)
+    }
+
+    pub async fn preflight_single_leg(
+        &self,
+        instrument: Instrument,
+    ) -> Result<PreflightSingleLegResponse, PublicError> {
+        let account_id = account_id!(self);
+        let request = PreflightSingleLegRequest {
+            instrument,
+            order_side: OrderSide::BUY,
+            order_type: OrderType::MARKET,
+            expiration: Expiration {
+                time_in_force: TimeInForce::DAY,
+                expiration_time: None,
+            },
+            quantity: None,
+            amount: None,
+            limit_price: None,
+            stop_price: None,
+            equity_market_session: MarketSession::CORE,
+            open_close_indicator: None,
+        };
+
+        let path = format!("/userapigateway/trading/{account_id}/preflight/single-leg");
+        let res = self.post(path.as_str(), &request).await?;
+        let data = response!(PreflightSingleLegResponse, res);
+
+        Ok(data)
     }
 }
 

@@ -1,37 +1,11 @@
-use std::str::FromStr;
-
 use chrono::NaiveDate;
 use serde::Serialize;
 use tracing::{debug, info};
 
-use crate::public::{OptionGreeks, OrderSide, Position, PublicClient, PublicError};
-
-#[derive(Debug, PartialEq, Serialize)]
-enum OptionType {
-    Call,
-    Put,
-}
-
-impl std::fmt::Display for OptionType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        match self {
-            Self::Call => write!(f, "Call"),
-            Self::Put => write!(f, "Put"),
-        }
-    }
-}
-
-impl FromStr for OptionType {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<OptionType, ()> {
-        match s {
-            "Call" => Ok(OptionType::Call),
-            "Put" => Ok(OptionType::Put),
-            _ => Err(()),
-        }
-    }
-}
+use crate::public::{
+    Instrument, InstrumentType, OptionGreeks, OptionType, OrderSide, Position, PublicClient,
+    PublicError,
+};
 
 #[derive(Debug, Serialize)]
 struct OptionPos {
@@ -44,6 +18,7 @@ struct OptionPos {
     cost: f32,
     gain_value: f32,
     gain_percent: f32,
+    quantity: i32,
     greeks: Option<OptionGreeks>,
 }
 
@@ -63,6 +38,7 @@ impl OptionPos {
         };
         let gain_value = cb.gain_value.parse().unwrap();
         let gain_percent = cb.gain_percentage.parse().unwrap();
+        let quantity = pos.quantity.parse().unwrap();
 
         Self {
             symbol,
@@ -74,7 +50,16 @@ impl OptionPos {
             cost,
             gain_value,
             gain_percent,
+            quantity,
             greeks: None,
+        }
+    }
+
+    fn instrument(&self) -> Instrument {
+        Instrument {
+            instrument_type: InstrumentType::OPTION,
+            name: None,
+            symbol: self.symbol.clone(),
         }
     }
 }
@@ -100,14 +85,28 @@ impl OptionsStopper {
         debug!("filtered options {options:?}");
 
         for o in options {
+            let should_exit = should_exit(&o);
             info!(
-                "{:5} {:4} @ ${} Gain: {:7}% Exit:{:?}",
-                o.ticker,
-                o.op_type,
-                o.strike,
-                o.gain_percent,
-                should_exit(&o)
+                "{:5} {:4} @ ${} x{} Gain: {:7}% Exit:{:?}",
+                o.ticker, o.op_type, o.strike, o.quantity, o.gain_percent, should_exit
             );
+
+            if should_exit {
+                info!("    -> Attempting to exit Option {}", o.symbol);
+
+                let symbols = vec![o.instrument()];
+                let quotes = self.public.get_quotes(symbols).await?;
+
+                let mut bid = "".to_string();
+                let mut ask = "".to_string();
+                for quote in quotes {
+                    debug!("Got quote: {:?}", quote);
+                    bid = quote.bid;
+                    ask = quote.ask;
+                }
+
+                info!("Can probably close between {} - {}", bid, ask);
+            }
         }
 
         Ok(())

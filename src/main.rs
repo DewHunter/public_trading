@@ -3,13 +3,16 @@ use std::time::Duration;
 use public_trading::{options::OptionsStopper, public::PublicClient};
 use rustls::crypto::CryptoProvider;
 use tokio::time::sleep;
-use tracing::{error, info};
+use tracing::{Level, error, info};
 use tracing_subscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
-    setup_cw_logs("public_trading/service", "dellxpslaptop_server").await;
+    CryptoProvider::install_default(rustls::crypto::aws_lc_rs::default_provider())
+        .expect("Failed to install default crypto provider");
+    setup_simple_log(Level::DEBUG);
+    // setup_cw_logs("public_trading/service", "dellxpslaptop_server").await;
 
     info!("Public Trading");
 
@@ -40,7 +43,7 @@ async fn main() {
     }
 
     info!("Sleeping for log collection");
-    sleep(Duration::from_secs(30)).await;
+    sleep(Duration::from_secs(2)).await;
 
     // let symbol = Instrument {
     //     symbol: "LMND".to_string(),
@@ -74,17 +77,17 @@ async fn main() {
     // }
 }
 
-// tracing_subscriber::fmt()
-//     .with_max_level(Level::DEBUG)
-//     .with_target(true)
-//     .with_thread_names(true)
-//     .with_level(true)
-//     .with_line_number(true)
-//     .init();
+fn setup_simple_log(level: Level) {
+    tracing_subscriber::fmt()
+        .with_max_level(level)
+        .with_target(true)
+        .with_thread_names(true)
+        .with_level(true)
+        .with_line_number(true)
+        .init();
+}
 
 async fn setup_cw_logs(log_group: &str, stream_name: &str) {
-    CryptoProvider::install_default(rustls::crypto::aws_lc_rs::default_provider())
-        .expect("Failed to install default crypto provider");
     let aws_config = aws_config::load_from_env().await;
     let cw = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 
