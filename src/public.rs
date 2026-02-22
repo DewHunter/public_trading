@@ -6,7 +6,7 @@ use reqwest::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::json;
 use std::{cell::RefCell, rc::Rc, str::FromStr};
 use tracing::{debug, error, info};
 
@@ -341,12 +341,25 @@ pub struct OptionChain {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OptionGreeks {
+    symbol: String,
+    greeks: Greeks,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Greeks {
     delta: String,
     gamma: String,
     theta: String,
     vega: String,
     rho: String,
     implied_volatility: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GetOptionGreeksResponse {
+    greeks: Vec<OptionGreeks>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -660,18 +673,18 @@ impl PublicClient {
         Ok(option_chain)
     }
 
+    /// # GetOptionGreeks
+    /// Get the greeks for a list of option symbol in the OSI-normalized format. Max 250 contracts per request.
     pub async fn get_option_greeks(
         &self,
-        osi_option_symbol: String,
-    ) -> Result<OptionGreeks, PublicError> {
+        osi_option_symbols: Vec<String>,
+    ) -> Result<Vec<OptionGreeks>, PublicError> {
         let account_id = account_id!(self);
-
-        let path =
-            format!("/userapigateway/option-details/{account_id}/{osi_option_symbol}/greeks");
+        let path = format!("/userapigateway/option-details/{account_id}/greeks");
         let res = self.get(path.as_str()).await?;
-        let greeks = response!(OptionGreeks, res);
+        let greeks_response = response!(GetOptionGreeksResponse, res);
 
-        Ok(greeks)
+        Ok(greeks_response.greeks)
     }
 
     pub async fn preflight_single_leg(

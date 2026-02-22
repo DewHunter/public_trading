@@ -1,0 +1,13 @@
+stocks = [
+'AAPL'
+]
+
+options = [
+'AAPL',
+'AMZN',
+'AMD',
+'GOOG',
+'COF',
+'RIVN',
+'LMND'
+]

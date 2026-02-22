@@ -1,10 +1,10 @@
 use chrono::NaiveDate;
 use serde::Serialize;
-use tracing::{debug, info};
+use tracing::{debug, info, instrument::Instrumented};
 
 use crate::public::{
     Instrument, InstrumentType, OptionGreeks, OptionType, OrderSide, Position, PublicClient,
-    PublicError,
+    PublicError, Quote,
 };
 
 #[derive(Debug, Serialize)]
@@ -133,6 +133,71 @@ fn parse_option_name(name: &str) -> (String, f32, OptionType, NaiveDate) {
     (ticker, strike, op_type, expiration)
 }
 
+pub struct OptionsAnalyze {
+    public: PublicClient,
+}
+
+impl OptionsAnalyze {
+    pub fn new(client: PublicClient) -> Self {
+        Self { public: client }
+    }
+
+    pub async fn analyze_option(
+        &self,
+        equity_symbol: String,
+        expiration: String,
+    ) -> Result<(), PublicError> {
+        let chain = self
+            .public
+            .get_option_chain(
+                Instrument {
+                    instrument_type: InstrumentType::EQUITY,
+                    symbol: equity_symbol.clone(),
+                    name: None,
+                },
+                expiration,
+            )
+            .await?;
+
+        let mut ops_syms: Vec<String> = chain
+            .puts
+            .iter()
+            .map(|put| put.instrument.symbol.clone())
+            .collect();
+        let mut calls_syms: Vec<String> = chain
+            .calls
+            .iter()
+            .map(|call| call.instrument.symbol.clone())
+            .collect();
+        ops_syms.append(&mut calls_syms);
+
+        let greeks = self.public.get_option_greeks(ops_syms).await?;
+
+        println!("Option Chain for {equity_symbol}:");
+        println!("Puts:");
+        for put in &chain.puts {
+            print_op_quote(put);
+        }
+        println!("============{equity_symbol}============");
+        println!("Calls:");
+        for put in &chain.puts {
+            print_op_quote(put);
+        }
+        println!("============{equity_symbol}============");
+
+        Ok(())
+    }
+}
+
+fn print_op_quote(q: &Quote) {
+    let sym = q.instrument.symbol.clone();
+    let bid = q.bid.clone();
+    let ask = q.ask.clone();
+    let vol = q.volume;
+
+    println!("{sym}: {bid}/{ask} Volume: {vol}");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -143,7 +208,7 @@ mod tests {
         let (ticker, strike, op_type, expiration) = parse_option_name(name);
         assert_eq!(ticker, "QCOM");
         assert_eq!(strike, 138f32);
-        assert_eq!(op_type, OptionType::Put);
+        assert_eq!(op_type, OptionType::PUT);
         assert_eq!(expiration, NaiveDate::from_ymd_opt(2026, 2, 20).unwrap());
     }
 }

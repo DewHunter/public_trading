@@ -72,4 +72,4 @@ curl -X GET \
 
 **Option Details**
 
-- [x] Get option greeks
+- [WIP] Get option greeks

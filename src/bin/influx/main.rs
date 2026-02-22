@@ -1,8 +1,6 @@
-use std::{env, rc::Rc, sync::Arc, time::Duration};
-
 use chrono::{DateTime, Utc};
-use influxdb::{Client, Error, InfluxDbWriteable, ReadQuery, Timestamp};
-use tokio::time::sleep;
+use influxdb::{Client, InfluxDbWriteable};
+use std::env;
 
 #[derive(InfluxDbWriteable)]
 struct StockMeasure {
