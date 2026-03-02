@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use serde::Serialize;
-use tracing::{debug, info, instrument::Instrumented};
+use tracing::{debug, info};
 
 use crate::public::{
     Instrument, InstrumentType, OptionGreeks, OptionType, OrderSide, Position, PublicClient,

@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
+clap = { version = "4", features = ["derive"] }
 aws-config = { version = "1.8.14", features = ["behavior-version-latest"] }
 aws-sdk-cloudwatchlogs = "1.118.0"
 base64 = "0.22.1"

@@ -1,5 +1,9 @@
+mod cli_ops;
+
 use std::time::Duration;
 
+use clap::Parser;
+use cli_ops::Cli;
 use public_trading::{options::OptionsStopper, public::PublicClient};
 use rustls::crypto::CryptoProvider;
 use tokio::time::sleep;
@@ -9,6 +13,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() {
+    let cli = Cli::parse();
+
     CryptoProvider::install_default(rustls::crypto::aws_lc_rs::default_provider())
         .expect("Failed to install default crypto provider");
     setup_simple_log(Level::DEBUG);
@@ -33,6 +39,18 @@ async fn main() {
             return;
         }
     };
+
+    if cli.show_portfolio {
+        match client.get_account_portfolio().await {
+            Ok(portfolio) => {
+                info!("Portfolio: {portfolio:?}");
+            }
+            Err(e) => {
+                error!("Failed to get portfolio: {e:?}");
+            }
+        }
+        return;
+    }
 
     let opstop = OptionsStopper::new(client);
     match opstop.run().await {
