@@ -40,27 +40,29 @@ struct PersonalTokenResponse {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AccountType {
-    BROKERAGE,
-    HIGH_YIELD,
-    BOND_ACCOUNT,
-    RIA_ASSET,
-    TREASURY,
-    TRADITIONAL_IRA,
-    ROTH_IRA,
+    Brokerage,
+    HighYield,
+    BondAccount,
+    RiaAsset,
+    Treasury,
+    TraditionalIra,
+    RothIra,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum OptionType {
-    CALL,
-    PUT,
+    Call,
+    Put,
 }
 
 impl std::fmt::Display for OptionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
-            Self::CALL => write!(f, "Call"),
-            Self::PUT => write!(f, "Put"),
+            Self::Call => write!(f, "Call"),
+            Self::Put => write!(f, "Put"),
         }
     }
 }
@@ -70,10 +72,10 @@ impl FromStr for OptionType {
 
     fn from_str(s: &str) -> Result<OptionType, ()> {
         match s {
-            "Call" => Ok(OptionType::CALL),
-            "CALL" => Ok(OptionType::CALL),
-            "Put" => Ok(OptionType::PUT),
-            "PUT" => Ok(OptionType::PUT),
+            "Call" => Ok(OptionType::Call),
+            "CALL" => Ok(OptionType::Call),
+            "Put" => Ok(OptionType::Put),
+            "PUT" => Ok(OptionType::Put),
             _ => Err(()),
         }
     }
@@ -106,6 +108,21 @@ pub struct AccountPortfolio {
     pub orders: Vec<Order>,
 }
 
+impl std::fmt::Display for AccountPortfolio {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{:?} Account: {}\n", self.account_type, self.account_id)?;
+        write!(
+            f,
+            "Buying power:{} Cash power:{} Options Power:{}\n",
+            self.buying_power.buying_power,
+            self.buying_power.cash_only_buying_power,
+            self.buying_power.options_buying_power
+        )?;
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuyingPower {
@@ -115,14 +132,15 @@ pub struct BuyingPower {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EquityType {
-    CASH,
-    JIKO_ACCOUNT,
-    STOCK,
-    OPTIONS_LONG,
-    OPTIONS_SHORT,
-    BONDS,
-    CRYPTO,
+    Cash,
+    JikoAccount,
+    Stock,
+    OptionsLong,
+    OptionsShort,
+    Bonds,
+    Crypto,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -175,42 +193,46 @@ pub struct Position {
 
 impl Position {
     pub fn is_option(&self) -> bool {
-        self.instrument.instrument_type == InstrumentType::OPTION
+        self.instrument.instrument_type == InstrumentType::Option
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
-    MARKET,
-    LIMIT,
-    STOP,
-    STOP_LIMIT,
+    Market,
+    Limit,
+    Stop,
+    StopLimit,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum OrderSide {
-    BUY,
-    SELL,
+    Buy,
+    Sell,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderStatus {
-    NEW,
-    PARTIALLY_FILLED,
-    CANCELLED,
-    QUEUED_CANCELLED,
-    FILLED,
-    REJECTED,
-    PENDING_REPLACE,
-    PENDING_CANCEL,
-    EXPIRED,
-    REPLACED,
+    New,
+    PartiallyFilled,
+    Cancelled,
+    QueueCancelled,
+    Filled,
+    Rejected,
+    PendingReplace,
+    PendingCancel,
+    Expired,
+    Replaced,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum TimeInForce {
-    DAY,
-    GTD,
+    Day,
+    Gtd,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -220,9 +242,10 @@ pub struct Expiration {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum OPIndicator {
-    OPEN,
-    CLOSE,
+    Open,
+    Close,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -256,16 +279,16 @@ pub struct Order {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
-#[allow(non_camel_case_types)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InstrumentType {
-    EQUITY,
-    OPTION,
-    MULTI_LEG_INSTRUMENT,
-    CRYPTO,
-    ALT,
-    TREASURY,
-    BOND,
-    INDEX,
+    Equity,
+    Option,
+    MultiLegInstrument,
+    Crypto,
+    Alt,
+    Treasury,
+    Bond,
+    Index,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -677,7 +700,7 @@ impl PublicClient {
     /// Get the greeks for a list of option symbol in the OSI-normalized format. Max 250 contracts per request.
     pub async fn get_option_greeks(
         &self,
-        osi_option_symbols: Vec<String>,
+        _osi_option_symbols: Vec<String>,
     ) -> Result<Vec<OptionGreeks>, PublicError> {
         let account_id = account_id!(self);
         let path = format!("/userapigateway/option-details/{account_id}/greeks");
@@ -694,10 +717,10 @@ impl PublicClient {
         let account_id = account_id!(self);
         let request = PreflightSingleLegRequest {
             instrument,
-            order_side: OrderSide::BUY,
-            order_type: OrderType::MARKET,
+            order_side: OrderSide::Buy,
+            order_type: OrderType::Market,
             expiration: Expiration {
-                time_in_force: TimeInForce::DAY,
+                time_in_force: TimeInForce::Day,
                 expiration_time: None,
             },
             quantity: None,

@@ -1,12 +1,10 @@
 mod cli_ops;
 
-use std::time::Duration;
-
 use clap::Parser;
-use cli_ops::Cli;
+use cli_ops::{Cli, Command};
+use public_trading::options::OptionsAnalyze;
 use public_trading::{options::OptionsStopper, public::PublicClient};
 use rustls::crypto::CryptoProvider;
-use tokio::time::sleep;
 use tracing::{Level, error, info};
 use tracing_subscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -17,8 +15,7 @@ async fn main() {
 
     CryptoProvider::install_default(rustls::crypto::aws_lc_rs::default_provider())
         .expect("Failed to install default crypto provider");
-    setup_simple_log(Level::DEBUG);
-    // setup_cw_logs("public_trading/service", "dellxpslaptop_server").await;
+    setup_simple_log(cli.log_level);
 
     info!("Public Trading");
 
@@ -40,59 +37,40 @@ async fn main() {
         }
     };
 
-    if cli.show_portfolio {
-        match client.get_account_portfolio().await {
+    match cli.command {
+        Command::ShowPortfolio { json } => match client.get_account_portfolio().await {
             Ok(portfolio) => {
-                info!("Portfolio: {portfolio:?}");
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&portfolio).unwrap());
+                } else {
+                    info!("Portfolio: {portfolio}");
+                }
             }
             Err(e) => {
                 error!("Failed to get portfolio: {e:?}");
             }
+        },
+
+        Command::AnalyzeOptions { symbol, expiration } => {
+            let analyzer = OptionsAnalyze::new(client);
+            match analyzer.analyze_option(symbol, expiration).await {
+                Ok(()) => {}
+                Err(e) => {
+                    error!("Analyze Options error: {e:?}");
+                }
+            };
         }
-        return;
-    }
 
-    let opstop = OptionsStopper::new(client);
-    match opstop.run().await {
-        Ok(()) => {}
-        Err(e) => {
-            error!("Options Stopper error: {e:?}");
+        Command::OptionsStopper { threshold, dry_run } => {
+            let opstop = OptionsStopper::new(client, threshold, dry_run);
+            match opstop.run().await {
+                Ok(()) => {}
+                Err(e) => {
+                    error!("Options Stopper error: {e:?}");
+                }
+            }
         }
     }
-
-    info!("Sleeping for log collection");
-    sleep(Duration::from_secs(2)).await;
-
-    // let symbol = Instrument {
-    //     symbol: "LMND".to_string(),
-    //     itype: InstrumentType::EQUITY,
-    // };
-
-    // let expiration_date = "2025-12-19".to_string();
-
-    // match client.get_option_chain(symbol, expiration_date).await {
-    //     Ok(option_chain) => {
-    //         info!("Full: {:?}", option_chain);
-    //         info!("Calls: {}", option_chain.calls.len());
-    //         info!("Puts: {}", option_chain.puts.len());
-    //     }
-    //     Err(e) => {
-    //         error!("Client error: {e:?}");
-    //         return;
-    //     }
-    // }
-    // match client
-    //     .get_option_greeks("LMND251219P00060000".to_string())
-    //     .await
-    // {
-    //     Ok(greeks) => {
-    //         info!("Greeks for LMND Dec 19 $60.00: {:?}", greeks);
-    //     }
-    //     Err(e) => {
-    //         error!("Client error: {e:?}");
-    //         return;
-    //     }
-    // }
 }
 
 fn setup_simple_log(level: Level) {
@@ -105,7 +83,7 @@ fn setup_simple_log(level: Level) {
         .init();
 }
 
-async fn setup_cw_logs(log_group: &str, stream_name: &str) {
+async fn _setup_cw_logs(log_group: &str, stream_name: &str) {
     let aws_config = aws_config::load_from_env().await;
     let cw = aws_sdk_cloudwatchlogs::Client::new(&aws_config);
 

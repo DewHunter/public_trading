@@ -32,9 +32,9 @@ impl OptionPos {
         let cb = pos.cost_basis.as_ref().unwrap();
         let cost = cb.total_cost.parse().unwrap();
         let side = if cost >= 0f32 {
-            OrderSide::BUY
+            OrderSide::Buy
         } else {
-            OrderSide::SELL
+            OrderSide::Sell
         };
         let gain_value = cb.gain_value.parse().unwrap();
         let gain_percent = cb.gain_percentage.parse().unwrap();
@@ -57,7 +57,7 @@ impl OptionPos {
 
     fn instrument(&self) -> Instrument {
         Instrument {
-            instrument_type: InstrumentType::OPTION,
+            instrument_type: InstrumentType::Option,
             name: None,
             symbol: self.symbol.clone(),
         }
@@ -66,11 +66,17 @@ impl OptionPos {
 
 pub struct OptionsStopper {
     public: PublicClient,
+    threshold: f32,
+    dry_run: bool,
 }
 
 impl OptionsStopper {
-    pub fn new(client: PublicClient) -> OptionsStopper {
-        Self { public: client }
+    pub fn new(client: PublicClient, threshold: f32, dry_run: bool) -> OptionsStopper {
+        Self {
+            public: client,
+            threshold,
+            dry_run,
+        }
     }
 
     pub async fn run(&self) -> Result<(), PublicError> {
@@ -85,13 +91,18 @@ impl OptionsStopper {
         debug!("filtered options {options:?}");
 
         for o in options {
-            let should_exit = should_exit(&o);
+            let should_exit = o.gain_percent <= self.threshold;
             info!(
                 "{:5} {:4} @ ${} x{} Gain: {:7}% Exit:{:?}",
                 o.ticker, o.op_type, o.strike, o.quantity, o.gain_percent, should_exit
             );
 
             if should_exit {
+                if self.dry_run {
+                    info!("    -> [dry-run] Would exit Option {}", o.symbol);
+                    continue;
+                }
+
                 info!("    -> Attempting to exit Option {}", o.symbol);
 
                 let symbols = vec![o.instrument()];
@@ -111,11 +122,6 @@ impl OptionsStopper {
 
         Ok(())
     }
-}
-
-/// Strategy to exit a position after 200% loss
-fn should_exit(position: &OptionPos) -> bool {
-    position.gain_percent <= -200.0f32
 }
 
 /// Parses an option name like "QCOM $138 Put Feb 20, '26"
@@ -151,7 +157,7 @@ impl OptionsAnalyze {
             .public
             .get_option_chain(
                 Instrument {
-                    instrument_type: InstrumentType::EQUITY,
+                    instrument_type: InstrumentType::Equity,
                     symbol: equity_symbol.clone(),
                     name: None,
                 },
@@ -171,7 +177,7 @@ impl OptionsAnalyze {
             .collect();
         ops_syms.append(&mut calls_syms);
 
-        let greeks = self.public.get_option_greeks(ops_syms).await?;
+        let _greeks = self.public.get_option_greeks(ops_syms).await?;
 
         println!("Option Chain for {equity_symbol}:");
         println!("Puts:");
@@ -208,7 +214,7 @@ mod tests {
         let (ticker, strike, op_type, expiration) = parse_option_name(name);
         assert_eq!(ticker, "QCOM");
         assert_eq!(strike, 138f32);
-        assert_eq!(op_type, OptionType::PUT);
+        assert_eq!(op_type, OptionType::Put);
         assert_eq!(expiration, NaiveDate::from_ymd_opt(2026, 2, 20).unwrap());
     }
 }
