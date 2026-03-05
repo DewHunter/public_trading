@@ -1,0 +1,25 @@
+{
+  "accounts": [
+    {
+      "accountId": "5OT13772",
+      "accountType": "HIGH_YIELD",
+      "optionsLevel": "NONE",
+      "brokerageAccountType": "CASH",
+      "tradePermissions": "RESTRICTED_NO_TRADING"
+    },
+    {
+      "accountId": "5LI70019",
+      "accountType": "BROKERAGE",
+      "optionsLevel": "LEVEL_3",
+      "brokerageAccountType": "MARGIN",
+      "tradePermissions": "BUY_AND_SELL"
+    },
+    {
+      "accountId": "5OD27341",
+      "accountType": "ROTH_IRA",
+      "optionsLevel": "LEVEL_2",
+      "brokerageAccountType": "CASH",
+      "tradePermissions": "BUY_AND_SELL"
+    }
+  ]
+}

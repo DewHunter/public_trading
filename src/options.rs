@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use serde::Serialize;
 use tracing::{debug, info};
 
 use crate::public::{
-    Instrument, InstrumentType, OptionGreeks, OptionType, OrderSide, Position, PublicClient,
-    PublicError, Quote,
+    Greeks, Instrument, InstrumentType, OptionGreeks, OptionType, OrderSide, Position,
+    PublicClient, PublicError, Quote,
 };
 
 #[derive(Debug, Serialize)]
@@ -63,6 +65,8 @@ impl OptionPos {
         }
     }
 }
+
+pub struct Strategy {}
 
 pub struct OptionsStopper {
     public: PublicClient,
@@ -153,6 +157,7 @@ impl OptionsAnalyze {
         equity_symbol: String,
         expiration: String,
     ) -> Result<(), PublicError> {
+        debug!("Fetching option chain for {equity_symbol}:{expiration}");
         let chain = self
             .public
             .get_option_chain(
@@ -177,17 +182,22 @@ impl OptionsAnalyze {
             .collect();
         ops_syms.append(&mut calls_syms);
 
-        let _greeks = self.public.get_option_greeks(ops_syms).await?;
+        debug!("Fetching option greeks for symbols {ops_syms:?}");
+        let greeks = self.public.get_option_greeks(&ops_syms).await?;
+        let greeks: HashMap<String, Greeks> = greeks
+            .iter()
+            .map(|g| (g.symbol.clone(), g.greeks.clone()))
+            .collect();
 
         println!("Option Chain for {equity_symbol}:");
         println!("Puts:");
         for put in &chain.puts {
-            print_op_quote(put);
+            print_op_quote(put, greeks.get(&put.instrument.symbol));
         }
         println!("============{equity_symbol}============");
         println!("Calls:");
-        for put in &chain.puts {
-            print_op_quote(put);
+        for call in &chain.calls {
+            print_op_quote(call, greeks.get(&call.instrument.symbol));
         }
         println!("============{equity_symbol}============");
 
@@ -195,13 +205,13 @@ impl OptionsAnalyze {
     }
 }
 
-fn print_op_quote(q: &Quote) {
+fn print_op_quote(q: &Quote, g: Option<&Greeks>) {
     let sym = q.instrument.symbol.clone();
     let bid = q.bid.clone();
     let ask = q.ask.clone();
     let vol = q.volume;
 
-    println!("{sym}: {bid}/{ask} Volume: {vol}");
+    println!("{sym}: {bid}/{ask} Volume: {vol} {g:?}");
 }
 
 #[cfg(test)]

@@ -39,7 +39,7 @@ struct PersonalTokenResponse {
     access_token: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AccountType {
     Brokerage,
@@ -85,10 +85,37 @@ impl FromStr for OptionType {
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub account_id: String,
-    pub account_type: String,
-    pub options_level: String,
-    pub brokerage_account_type: String,
-    pub trade_permissions: String,
+    pub account_type: AccountType,
+    pub options_level: OptionsLevel,
+    pub brokerage_account_type: BrokerageAccountType,
+    pub trade_permissions: TradePermissions,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[allow(non_camel_case_types)]
+pub enum OptionsLevel {
+    None,
+    Level_1,
+    Level_2,
+    Level_3,
+    Level_4,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum BrokerageAccountType {
+    Cash,
+    Margin,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum TradePermissions {
+    BuyAndSell,
+    RestrictedSettledFundOnly,
+    RestrictedCloseOnly,
+    RestrictedNoTrading,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -110,14 +137,105 @@ pub struct AccountPortfolio {
 
 impl std::fmt::Display for AccountPortfolio {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{:?} Account: {}\n", self.account_type, self.account_id)?;
-        write!(
+        writeln!(
             f,
-            "Buying power:{} Cash power:{} Options Power:{}\n",
-            self.buying_power.buying_power,
-            self.buying_power.cash_only_buying_power,
-            self.buying_power.options_buying_power
+            "=== {:?} Account: {} ===",
+            self.account_type, self.account_id
         )?;
+
+        writeln!(f)?;
+        writeln!(f, "Buying Power")?;
+        writeln!(f, "  Total:    ${}", self.buying_power.buying_power)?;
+        writeln!(
+            f,
+            "  Cash:     ${}",
+            self.buying_power.cash_only_buying_power
+        )?;
+        writeln!(f, "  Options:  ${}", self.buying_power.options_buying_power)?;
+
+        if !self.equity.is_empty() {
+            writeln!(f)?;
+            writeln!(f, "Equity")?;
+            for eq in &self.equity {
+                let pct = eq.percent_of_portfolio.as_deref().unwrap_or("-");
+                writeln!(
+                    f,
+                    "  {:<15}  ${:>14}  {:>6}%",
+                    format!("{:?}", eq.equity_type),
+                    eq.value,
+                    pct
+                )?;
+            }
+        }
+
+        if !self.positions.is_empty() {
+            writeln!(f)?;
+            writeln!(f, "Positions ({})", self.positions.len())?;
+            writeln!(
+                f,
+                "  {:<8}  {:<28}  {:>6}  {:>10}  {:>12}  {:>6}  {:>9}  {:>9}",
+                "Symbol", "Name", "Qty", "Price", "Value", "Port%", "Daily%", "Total%"
+            )?;
+            writeln!(
+                f,
+                "  {:-<8}  {:-<28}  {:->6}  {:->10}  {:->12}  {:->6}  {:->9}  {:->9}",
+                "", "", "", "", "", "", "", ""
+            )?;
+            for pos in &self.positions {
+                let name = pos.instrument.name.as_deref().unwrap_or("-");
+                let name_trunc = &name[..name.len().min(28)];
+                let price = pos
+                    .last_price
+                    .as_ref()
+                    .map(|lp| format!("${}", lp.last_price))
+                    .unwrap_or_else(|| "-".to_string());
+                let value = pos
+                    .current_value
+                    .as_deref()
+                    .map(|v| format!("${}", v))
+                    .unwrap_or_else(|| "-".to_string());
+                let pct = pos.percent_of_portfolio.as_deref().unwrap_or("-");
+                let daily = pos
+                    .position_daily_gain
+                    .as_ref()
+                    .map(|g| format!("{}%", g.gain_percentage))
+                    .unwrap_or_else(|| "-".to_string());
+                let total = pos
+                    .cost_basis
+                    .as_ref()
+                    .map(|cb| format!("{}%", cb.gain_percentage))
+                    .unwrap_or_else(|| "-".to_string());
+
+                writeln!(
+                    f,
+                    "  {:<8}  {:<28}  {:>6}  {:>10}  {:>12}  {:>6}%  {:>9}  {:>9}",
+                    pos.instrument.symbol,
+                    name_trunc,
+                    pos.quantity,
+                    price,
+                    value,
+                    pct,
+                    daily,
+                    total
+                )?;
+            }
+        }
+
+        if !self.orders.is_empty() {
+            writeln!(f)?;
+            writeln!(f, "Open Orders ({})", self.orders.len())?;
+            for order in &self.orders {
+                writeln!(
+                    f,
+                    "  {} {:?} {:?} {:?}  qty={}",
+                    order.instrument.symbol,
+                    order.order_type,
+                    order.side,
+                    order.status,
+                    order.quantity.as_deref().unwrap_or("-")
+                )?;
+            }
+        }
 
         Ok(())
     }
@@ -364,11 +482,11 @@ pub struct OptionChain {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OptionGreeks {
-    symbol: String,
-    greeks: Greeks,
+    pub symbol: String,
+    pub greeks: Greeks,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Greeks {
     delta: String,
@@ -496,6 +614,7 @@ macro_rules! response {
         match $res.json::<$res_type>().await {
             Ok(data) => data,
             Err(e) => {
+                error!("Cannot parse response {:?}", stringify!($res_type));
                 return Err(PublicError::ServiceError(
                     "MalformedJsonResponse".to_string(),
                     format!("Couldnt parse json response: {e}"),
@@ -523,7 +642,7 @@ impl PublicClient {
         })
     }
 
-    pub async fn set_account(&mut self, account_type: &str) -> Result<(), PublicError> {
+    pub async fn set_account(&mut self, account_type: AccountType) -> Result<(), PublicError> {
         let accounts = self.get_accounts().await?;
 
         let account_id = accounts
@@ -535,7 +654,7 @@ impl PublicClient {
         let account_id = if let Some(account_id) = account_id {
             account_id.to_string()
         } else {
-            error!("There was no valid account_id of type {account_type}");
+            error!("There was no valid account_id of type {account_type:?}");
             return Err(PublicError::AccountTypeNotFound);
         };
 
@@ -551,10 +670,51 @@ impl PublicClient {
         }
     }
 
+    fn make_uri_with_params<P, K, V>(&self, path: &str, params: P) -> Result<Url, PublicError>
+    where
+        P: IntoIterator,
+        P::Item: std::borrow::Borrow<(K, V)>,
+        K: AsRef<str>,
+        V: AsRef<str>,
+    {
+        let url = match self.base_url.join(path) {
+            Ok(uri) => uri,
+            Err(_) => return Err(PublicError::InvalidUri),
+        };
+
+        match Url::parse_with_params(url.as_str(), params) {
+            Ok(uri) => Ok(uri),
+            Err(_) => return Err(PublicError::InvalidUri),
+        }
+    }
+
     /// Makes a GET request to the specified endpoint
     async fn get(&self, path: &str) -> Result<Response, PublicError> {
         let uri = self.make_uri(path)?;
 
+        let response = self
+            .client
+            .get(uri)
+            .header(
+                AUTHORIZATION,
+                format!("Bearer {}", self.access_token().await?),
+            )
+            .header(ACCEPT, "*/*")
+            .send()
+            .await;
+
+        handle_response(response).await
+    }
+
+    /// Makes a GET request to the specified endpoint, with URL parameters
+    async fn get_with_params<P, K, V>(&self, path: &str, params: P) -> Result<Response, PublicError>
+    where
+        P: IntoIterator,
+        P::Item: std::borrow::Borrow<(K, V)>,
+        K: AsRef<str>,
+        V: AsRef<str>,
+    {
+        let uri = self.make_uri_with_params(path, params)?;
         let response = self
             .client
             .get(uri)
@@ -700,11 +860,14 @@ impl PublicClient {
     /// Get the greeks for a list of option symbol in the OSI-normalized format. Max 250 contracts per request.
     pub async fn get_option_greeks(
         &self,
-        _osi_option_symbols: Vec<String>,
+        osi_option_symbols: &Vec<String>,
     ) -> Result<Vec<OptionGreeks>, PublicError> {
         let account_id = account_id!(self);
         let path = format!("/userapigateway/option-details/{account_id}/greeks");
-        let res = self.get(path.as_str()).await?;
+        let symbols = osi_option_symbols.join(",");
+        let res = self
+            .get_with_params(path.as_str(), &[("osiSymbols", symbols)])
+            .await?;
         let greeks_response = response!(GetOptionGreeksResponse, res);
 
         Ok(greeks_response.greeks)
@@ -752,10 +915,10 @@ pub async fn handle_response(
     if !response.status().is_success() {
         match response.json::<ServiceErrorMsg>().await {
             Ok(msg) => return Err(PublicError::ServiceError(msg.error, msg.message)),
-            Err(_) => {
+            Err(e) => {
                 return Err(PublicError::ServiceError(
                     "MalformedJsonErrorResponse".to_string(),
-                    format!("Couldnt parse server error json response"),
+                    format!("Couldnt parse server error {e}"),
                 ));
             }
         }
@@ -771,6 +934,7 @@ mod tests {
 
     const ACCOUNT_PORTFOLIO: &str = include_str!("fixtures/account_portfolio.json");
     const OPTION_CHAIN: &str = include_str!("fixtures/option_chain.json");
+    const ACCOUNTS: &str = include_str!("fixtures/accounts.json");
 
     #[test]
     fn test_parse_option_chain() {
@@ -794,5 +958,14 @@ mod tests {
         }
 
         assert!(portfolio.is_ok());
+    }
+
+    #[test]
+    fn test_parse_accounts() {
+        let accounts: Result<AccountsResponse, serde_json::Error> = serde_json::from_str(ACCOUNTS);
+        if let Err(e) = &accounts {
+            println!("Error {e:?}");
+        }
+        assert!(accounts.is_ok());
     }
 }

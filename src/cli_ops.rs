@@ -5,7 +5,7 @@ use tracing::Level;
 #[command(name = "public_trading", about = "Public Trading CLI")]
 pub struct Cli {
     /// Log level (error, warn, info, debug, trace)
-    #[arg(long, default_value = "info", global = true)]
+    #[arg(long, short = 'L', default_value = "info", global = true)]
     pub log_level: Level,
 
     #[command(subcommand)]

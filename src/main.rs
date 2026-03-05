@@ -3,6 +3,7 @@ mod cli_ops;
 use clap::Parser;
 use cli_ops::{Cli, Command};
 use public_trading::options::OptionsAnalyze;
+use public_trading::public::AccountType;
 use public_trading::{options::OptionsStopper, public::PublicClient};
 use rustls::crypto::CryptoProvider;
 use tracing::{Level, error, info};
@@ -27,7 +28,7 @@ async fn main() {
         }
     };
 
-    match client.set_account("BROKERAGE").await {
+    match client.set_account(AccountType::Brokerage).await {
         Ok(()) => {
             info!("Successfully set account type to BROKERAGE");
         }
@@ -43,7 +44,7 @@ async fn main() {
                 if json {
                     println!("{}", serde_json::to_string_pretty(&portfolio).unwrap());
                 } else {
-                    info!("Portfolio: {portfolio}");
+                    println!("{portfolio}");
                 }
             }
             Err(e) => {
@@ -79,6 +80,7 @@ fn setup_simple_log(level: Level) {
         .with_target(true)
         .with_thread_names(true)
         .with_level(true)
+        .with_file(true)
         .with_line_number(true)
         .init();
 }
