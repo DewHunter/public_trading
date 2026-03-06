@@ -72,5 +72,4 @@ curl -X GET \
 
 **Option Details**
 
-- [WIP] Get option greeks
-  - 200 works, error needs to be parsed correctly
+- [x] Get option greeks

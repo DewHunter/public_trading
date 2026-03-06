@@ -480,10 +480,30 @@ pub struct OptionChain {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
+// #[serde(rename_all = "camelCase")]
+pub struct OptionGreeksResponse {
+    pub symbol: String,
+    pub greeks: Option<Greeks>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OptionGreeks {
     pub symbol: String,
     pub greeks: Greeks,
+}
+
+impl TryFrom<&OptionGreeksResponse> for OptionGreeks {
+    type Error = ();
+
+    fn try_from(value: &OptionGreeksResponse) -> Result<Self, Self::Error> {
+        match &value.greeks {
+            Some(greeks) => Ok(OptionGreeks {
+                symbol: value.symbol.clone(),
+                greeks: greeks.clone(),
+            }),
+            None => Err(()),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -500,7 +520,7 @@ pub struct Greeks {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct GetOptionGreeksResponse {
-    greeks: Vec<OptionGreeks>,
+    greeks: Vec<OptionGreeksResponse>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -869,8 +889,13 @@ impl PublicClient {
             .get_with_params(path.as_str(), &[("osiSymbols", symbols)])
             .await?;
         let greeks_response = response!(GetOptionGreeksResponse, res);
+        let greeks: Vec<OptionGreeks> = greeks_response
+            .greeks
+            .iter()
+            .filter_map(|g| OptionGreeks::try_from(g).ok())
+            .collect();
 
-        Ok(greeks_response.greeks)
+        Ok(greeks)
     }
 
     pub async fn preflight_single_leg(
@@ -917,7 +942,7 @@ pub async fn handle_response(
             Ok(msg) => return Err(PublicError::ServiceError(msg.error, msg.message)),
             Err(e) => {
                 return Err(PublicError::ServiceError(
-                    "MalformedJsonErrorResponse".to_string(),
+                    "MalformedErrorJsonResponse".to_string(),
                     format!("Couldnt parse server error {e}"),
                 ));
             }

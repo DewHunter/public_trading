@@ -5,19 +5,18 @@ use cli_opts::{Cli, Operation};
 use public_trading::public::{AccountType, PublicClient, PublicError};
 use rustls::crypto::CryptoProvider;
 use serde_json::json;
-use tracing::{Level, info};
+use tracing::Level;
 
 #[tokio::main]
 async fn main() -> Result<(), PublicError> {
     let cli = Cli::parse();
-    setup_log(Level::DEBUG);
+    setup_log(Level::INFO);
 
     CryptoProvider::install_default(rustls::crypto::aws_lc_rs::default_provider())
         .expect("Failed to install default crypto provider");
 
     let mut client = PublicClient::new()?;
     client.set_account(AccountType::Brokerage).await?;
-    info!("Set account type");
 
     match cli.operation {
         Operation::GetOptionGreeks { symbols } => {
