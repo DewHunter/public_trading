@@ -7,7 +7,7 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{cell::RefCell, rc::Rc, str::FromStr};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, str::FromStr};
 use tracing::{debug, error, info};
 
 pub struct PublicClient {
@@ -39,7 +39,7 @@ struct PersonalTokenResponse {
     access_token: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, clap::ValueEnum, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AccountType {
     Brokerage,
@@ -251,6 +251,17 @@ pub struct BuyingPower {
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SecurityType {
+    Equity,
+    Option,
+    Crypto,
+    Alt,
+    Treasury,
+    Bond,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EquityType {
     Cash,
     JikoAccount,
@@ -354,6 +365,7 @@ pub enum TimeInForce {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Expiration {
     pub time_in_force: TimeInForce,
     pub expiration_time: Option<String>,
@@ -375,6 +387,7 @@ pub struct Leg {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Order {
     pub order_id: String,
     pub instrument: Instrument,
@@ -389,14 +402,76 @@ pub struct Order {
     pub limit_price: Option<String>,
     pub stop_price: Option<String>,
     pub closed_at: Option<String>,
-    pub open_closed_indicator: Option<OPIndicator>,
+    pub open_close_indicator: Option<OPIndicator>,
     pub filled_quantity: Option<String>,
     pub average_price: Option<String>,
     pub legs: Vec<Leg>,
     pub reject_reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetHistoryResponse {
+    transactions: Vec<HistoryTransaction>,
+    next_token: Option<String>,
+    start: Option<String>,
+    end: Option<String>,
+    page_size: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryTransaction {
+    timestamp: String,
+    id: String,
+    #[serde(rename = "type")]
+    transaction_type: HistoryTransactionType,
+    sub_type: HistoryTransactionSubType,
+    account_number: String,
+    symbol: Option<String>,
+    security_type: Option<SecurityType>,
+    side: Option<OrderSide>,
+    description: Option<String>,
+    net_amount: Option<String>,
+    principal_amount: Option<String>,
+    quantity: Option<String>,
+    direction: Option<HistoryTransactionDirection>,
+    fees: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum HistoryTransactionType {
+    Trade,
+    MoneyMovement,
+    PositionAdjustment,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum HistoryTransactionSubType {
+    Deposit,
+    Withdrawal,
+    DepositReturned,
+    WithdrawalReturned,
+    Dividend,
+    Fee,
+    Reward,
+    TreasuryBillTransfer,
+    Interest,
+    Trade,
+    Transfer,
+    Misc,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum HistoryTransactionDirection {
+    Incoming,
+    Outgoing,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InstrumentType {
     Equity,
@@ -409,7 +484,7 @@ pub enum InstrumentType {
     Index,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Instrument {
     pub symbol: String,
     pub name: Option<String>,
@@ -480,7 +555,6 @@ pub struct OptionChain {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-// #[serde(rename_all = "camelCase")]
 pub struct OptionGreeksResponse {
     pub symbol: String,
     pub greeks: Option<Greeks>,
@@ -509,12 +583,12 @@ impl TryFrom<&OptionGreeksResponse> for OptionGreeks {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Greeks {
-    delta: String,
-    gamma: String,
-    theta: String,
-    vega: String,
-    rho: String,
-    implied_volatility: String,
+    pub delta: String,
+    pub gamma: String,
+    pub theta: String,
+    pub vega: String,
+    pub rho: String,
+    pub implied_volatility: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -820,6 +894,8 @@ impl PublicClient {
         Ok(data.accounts)
     }
 
+    /// ## Get Account Portfolio
+    /// Returns the current status of all assets under the given account.
     pub async fn get_account_portfolio(&self) -> Result<AccountPortfolio, PublicError> {
         let account_id = account_id!(self);
         let path = format!("/userapigateway/trading/{account_id}/portfolio/v2");
@@ -827,6 +903,36 @@ impl PublicClient {
         let data = response!(AccountPortfolio, res);
 
         Ok(data)
+    }
+
+    /// Get History
+    /// Returns the transaction history of the account
+    pub async fn get_history(
+        &self,
+        start: Option<String>,
+        end: Option<String>,
+        page_size: Option<i64>,
+        next_token: Option<String>,
+    ) -> Result<Vec<HistoryTransaction>, PublicError> {
+        let account_id = account_id!(self);
+        let path = format!("/userapigateway/trading/{account_id}/history");
+        let mut params = HashMap::new();
+        if let Some(start) = start {
+            params.insert("start", start.to_string());
+        }
+        if let Some(end) = end {
+            params.insert("end", end.to_string());
+        }
+        if let Some(page_size) = page_size {
+            params.insert("pageSize", page_size.to_string());
+        }
+        if let Some(next_token) = next_token {
+            params.insert("nextToken", next_token.to_string());
+        }
+        let res = self.get_with_params(path.as_str(), &params).await?;
+        let data = response!(GetHistoryResponse, res);
+
+        Ok(data.transactions)
     }
 
     pub async fn get_quotes(&self, symbols: Vec<Instrument>) -> Result<Vec<Quote>, PublicError> {
@@ -843,6 +949,8 @@ impl PublicClient {
         Ok(data.quotes)
     }
 
+    /// ## Get Option Expirations
+    /// Gets the tradeable expirations available for the instrument.
     pub async fn get_option_expirations(
         &self,
         instrument: Instrument,
@@ -857,6 +965,8 @@ impl PublicClient {
         Ok(data.expirations)
     }
 
+    /// ## Get Option Chain
+    /// Gets the tradeable option symbols for the instrument with the provided expiration.
     pub async fn get_option_chain(
         &self,
         instrument: Instrument,
@@ -876,7 +986,7 @@ impl PublicClient {
         Ok(option_chain)
     }
 
-    /// # GetOptionGreeks
+    /// ## GetOptionGreeks
     /// Get the greeks for a list of option symbol in the OSI-normalized format. Max 250 contracts per request.
     pub async fn get_option_greeks(
         &self,
@@ -960,6 +1070,7 @@ mod tests {
     const ACCOUNT_PORTFOLIO: &str = include_str!("fixtures/account_portfolio.json");
     const OPTION_CHAIN: &str = include_str!("fixtures/option_chain.json");
     const ACCOUNTS: &str = include_str!("fixtures/accounts.json");
+    const ACC_WITH_ORDERS: &str = include_str!("fixtures/acc_portfolio_with_orders.json");
 
     #[test]
     fn test_parse_option_chain() {
@@ -983,6 +1094,16 @@ mod tests {
         }
 
         assert!(portfolio.is_ok());
+    }
+
+    #[test]
+    fn test_parse_account_portfolio_with_orders() {
+        let accounts: Result<AccountPortfolio, serde_json::Error> =
+            serde_json::from_str(ACC_WITH_ORDERS);
+        if let Err(e) = &accounts {
+            println!("Error {e:?}");
+        }
+        assert!(accounts.is_ok());
     }
 
     #[test]

@@ -1,0 +1,531 @@
+{
+  "accountId": "5LI70019",
+  "accountType": "BROKERAGE",
+  "buyingPower": {
+    "cashOnlyBuyingPower": "58114.30",
+    "buyingPower": "352904.38",
+    "optionsBuyingPower": "157765.71"
+  },
+  "equity": [
+    {
+      "type": "OPTIONS_SHORT",
+      "value": "-1100.00",
+      "percentageOfPortfolio": "-0.30"
+    },
+    { "type": "STOCK", "value": "305647.69", "percentageOfPortfolio": "84.27" },
+    { "type": "CASH", "value": "58114.30", "percentageOfPortfolio": "16.02" },
+    {
+      "type": "OPTIONS_LONG",
+      "value": "50.00",
+      "percentageOfPortfolio": "0.01"
+    }
+  ],
+  "positions": [
+    {
+      "instrument": { "symbol": "GOOG", "name": "Alphabet", "type": "EQUITY" },
+      "quantity": "5",
+      "openedAt": "2025-12-01T21:00:00Z",
+      "currentValue": "1506.05",
+      "percentOfPortfolio": "0.42",
+      "lastPrice": {
+        "lastPrice": "301.21",
+        "timestamp": "2026-03-09T17:52:45Z"
+      },
+      "instrumentGain": {
+        "gainValue": "2.91",
+        "gainPercentage": "0.98",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "14.55",
+        "gainPercentage": "0.98",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "1589.35",
+        "unitCost": "317.87",
+        "gainValue": "-83.30",
+        "gainPercentage": "-5.24",
+        "lastUpdate": "2025-12-01T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "AERO",
+        "name": "Grupo Aeromexico SAB de CV",
+        "type": "EQUITY"
+      },
+      "quantity": "10",
+      "openedAt": "2025-11-25T21:00:00Z",
+      "currentValue": "145.05",
+      "percentOfPortfolio": "0.04",
+      "lastPrice": {
+        "lastPrice": "14.50",
+        "timestamp": "2026-03-09T17:52:06Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-1.22",
+        "gainPercentage": "-7.73",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-12.15",
+        "gainPercentage": "-7.73",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "177.00",
+        "unitCost": "17.70",
+        "gainValue": "-31.95",
+        "gainPercentage": "-18.05",
+        "lastUpdate": "2025-11-25T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "COF",
+        "name": "Capital One",
+        "type": "EQUITY"
+      },
+      "quantity": "100",
+      "openedAt": "2020-08-03T20:00:00Z",
+      "currentValue": "18035.50",
+      "percentOfPortfolio": "4.97",
+      "lastPrice": {
+        "lastPrice": "180.36",
+        "timestamp": "2026-03-09T17:52:43Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-7.36",
+        "gainPercentage": "-3.92",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-735.50",
+        "gainPercentage": "-3.92",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "12371.73",
+        "unitCost": "123.72",
+        "gainValue": "5663.77",
+        "gainPercentage": "45.78",
+        "lastUpdate": "2025-03-03T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "GPRO", "name": "GoPro", "type": "EQUITY" },
+      "quantity": "2000",
+      "openedAt": "2025-01-30T21:00:00Z",
+      "currentValue": "1478.60",
+      "percentOfPortfolio": "0.41",
+      "lastPrice": {
+        "lastPrice": "0.7393",
+        "timestamp": "2026-03-09T17:52:40Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-0.02",
+        "gainPercentage": "-2.72",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-41.40",
+        "gainPercentage": "-2.72",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "2614.14",
+        "unitCost": "1.31",
+        "gainValue": "-1135.54",
+        "gainPercentage": "-43.44",
+        "lastUpdate": "2025-11-18T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "LITE260313P00555000",
+        "name": "LITE $555 Put Mar 13, '26",
+        "type": "OPTION"
+      },
+      "quantity": "-1",
+      "openedAt": "2026-03-09T14:37:57.909Z",
+      "currentValue": "-965.00",
+      "percentOfPortfolio": "-0.27",
+      "lastPrice": { "lastPrice": "9.65", "timestamp": "2026-03-09T17:52:44Z" },
+      "instrumentGain": {
+        "gainValue": "-26.35",
+        "gainPercentage": "-73.19",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "155.01",
+        "gainPercentage": "13.84",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "-1120.01",
+        "unitCost": "11.20",
+        "gainValue": "155.01",
+        "gainPercentage": "13.84",
+        "lastUpdate": "2026-03-09T14:37:57.909Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "NVDA", "name": "NVIDIA", "type": "EQUITY" },
+      "quantity": "300",
+      "openedAt": "2017-09-05T20:00:00Z",
+      "currentValue": "53876.97",
+      "percentOfPortfolio": "14.85",
+      "lastPrice": {
+        "lastPrice": "179.59",
+        "timestamp": "2026-03-09T17:52:46Z"
+      },
+      "instrumentGain": {
+        "gainValue": "1.77",
+        "gainPercentage": "1.00",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "530.97",
+        "gainPercentage": "1.00",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "11709.82",
+        "unitCost": "39.03",
+        "gainValue": "42167.15",
+        "gainPercentage": "360.10",
+        "lastUpdate": "2025-04-17T20:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "SLDP",
+        "name": "Solid Power",
+        "type": "EQUITY"
+      },
+      "quantity": "2950",
+      "openedAt": "2025-11-10T21:00:00Z",
+      "currentValue": "9115.50",
+      "percentOfPortfolio": "2.51",
+      "lastPrice": { "lastPrice": "3.09", "timestamp": "2026-03-09T17:52:47Z" },
+      "instrumentGain": {
+        "gainValue": "-0.03",
+        "gainPercentage": "-0.96",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-88.50",
+        "gainPercentage": "-0.96",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "20975.56",
+        "unitCost": "7.11",
+        "gainValue": "-11860.06",
+        "gainPercentage": "-56.54",
+        "lastUpdate": "2025-12-15T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "RIVN260313P00015000",
+        "name": "RIVN $15 Put Mar 13, '26",
+        "type": "OPTION"
+      },
+      "quantity": "-5",
+      "openedAt": "2026-03-09T17:21:04.153Z",
+      "currentValue": "-135.00",
+      "percentOfPortfolio": "-0.04",
+      "lastPrice": { "lastPrice": "0.27", "timestamp": "2026-03-09T17:52:45Z" },
+      "instrumentGain": {
+        "gainValue": "-0.16",
+        "gainPercentage": "-37.21",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-14.93",
+        "gainPercentage": "-12.43",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "-120.07",
+        "unitCost": "0.24",
+        "gainValue": "-14.93",
+        "gainPercentage": "-12.43",
+        "lastUpdate": "2026-03-09T17:21:04.153Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "QS",
+        "name": "QuantumScape",
+        "type": "EQUITY"
+      },
+      "quantity": "500",
+      "openedAt": "2025-11-10T21:00:00Z",
+      "currentValue": "3300.00",
+      "percentOfPortfolio": "0.91",
+      "lastPrice": { "lastPrice": "6.60", "timestamp": "2026-03-09T17:52:32Z" },
+      "instrumentGain": {
+        "gainValue": "-0.09",
+        "gainPercentage": "-1.35",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-45.00",
+        "gainPercentage": "-1.35",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "7754.00",
+        "unitCost": "15.51",
+        "gainValue": "-4454.00",
+        "gainPercentage": "-57.44",
+        "lastUpdate": "2025-11-10T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "MU",
+        "name": "Micron Technology",
+        "type": "EQUITY"
+      },
+      "quantity": "80",
+      "openedAt": "2022-12-15T21:00:00Z",
+      "currentValue": "30334.36",
+      "percentOfPortfolio": "8.36",
+      "lastPrice": {
+        "lastPrice": "379.18",
+        "timestamp": "2026-03-09T17:52:46Z"
+      },
+      "instrumentGain": {
+        "gainValue": "8.88",
+        "gainPercentage": "2.40",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "710.36",
+        "gainPercentage": "2.40",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "15633.46",
+        "unitCost": "195.42",
+        "gainValue": "14700.90",
+        "gainPercentage": "94.03",
+        "lastUpdate": "2026-02-03T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "LMND", "name": "Lemonade", "type": "EQUITY" },
+      "quantity": "1653",
+      "openedAt": "2021-04-29T20:00:00Z",
+      "currentValue": "87493.29",
+      "percentOfPortfolio": "24.12",
+      "lastPrice": {
+        "lastPrice": "52.93",
+        "timestamp": "2026-03-09T17:52:32Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-2.20",
+        "gainPercentage": "-3.99",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-3636.60",
+        "gainPercentage": "-3.99",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "39224.92",
+        "unitCost": "23.73",
+        "gainValue": "48268.37",
+        "gainPercentage": "123.06",
+        "lastUpdate": "2025-10-21T20:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "NFLX", "name": "Netflix", "type": "EQUITY" },
+      "quantity": "5",
+      "openedAt": "2025-12-09T21:00:00Z",
+      "currentValue": "487.33",
+      "percentOfPortfolio": "0.13",
+      "lastPrice": {
+        "lastPrice": "97.46",
+        "timestamp": "2026-03-09T17:52:48Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-1.56",
+        "gainPercentage": "-1.57",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-7.78",
+        "gainPercentage": "-1.57",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "483.00",
+        "unitCost": "96.60",
+        "gainValue": "4.32",
+        "gainPercentage": "0.90",
+        "lastUpdate": "2025-12-09T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "RIVN",
+        "name": "Rivian Automotive",
+        "type": "EQUITY"
+      },
+      "quantity": "2409",
+      "openedAt": "2021-11-10T21:00:00Z",
+      "currentValue": "37977.89",
+      "percentOfPortfolio": "10.47",
+      "lastPrice": {
+        "lastPrice": "15.76",
+        "timestamp": "2026-03-09T17:52:43Z"
+      },
+      "instrumentGain": {
+        "gainValue": "0.40",
+        "gainPercentage": "2.57",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "951.56",
+        "gainPercentage": "2.57",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "32702.31",
+        "unitCost": "13.58",
+        "gainValue": "5275.57",
+        "gainPercentage": "16.13",
+        "lastUpdate": "2026-01-16T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "XYZ", "name": "Block Inc", "type": "EQUITY" },
+      "quantity": "310",
+      "openedAt": "2026-01-12T21:00:00Z",
+      "currentValue": "20015.15",
+      "percentOfPortfolio": "5.52",
+      "lastPrice": {
+        "lastPrice": "64.56",
+        "timestamp": "2026-03-09T17:52:45Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-1.76",
+        "gainPercentage": "-2.66",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-547.15",
+        "gainPercentage": "-2.66",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "18361.27",
+        "unitCost": "59.23",
+        "gainValue": "1653.88",
+        "gainPercentage": "9.01",
+        "lastUpdate": "2026-02-06T21:00:00Z"
+      }
+    },
+    {
+      "instrument": { "symbol": "AMZN", "name": "Amazon", "type": "EQUITY" },
+      "quantity": "200",
+      "openedAt": "2020-08-03T20:00:00Z",
+      "currentValue": "41882.00",
+      "percentOfPortfolio": "11.55",
+      "lastPrice": {
+        "lastPrice": "209.41",
+        "timestamp": "2026-03-09T17:52:45Z"
+      },
+      "instrumentGain": {
+        "gainValue": "-3.80",
+        "gainPercentage": "-1.78",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "-760.00",
+        "gainPercentage": "-1.78",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "32449.85",
+        "unitCost": "162.25",
+        "gainValue": "9432.15",
+        "gainPercentage": "29.07",
+        "lastUpdate": "2021-11-22T21:00:00Z"
+      }
+    },
+    {
+      "instrument": {
+        "symbol": "RIVN260313P00014000",
+        "name": "RIVN $14 Put Mar 13, '26",
+        "type": "OPTION"
+      },
+      "quantity": "5",
+      "openedAt": "2026-03-09T17:21:04.153Z",
+      "currentValue": "50.00",
+      "percentOfPortfolio": "0.01",
+      "lastPrice": { "lastPrice": "0.10", "timestamp": "2026-03-09T17:52:47Z" },
+      "instrumentGain": {
+        "gainValue": "-0.05",
+        "gainPercentage": "-33.33",
+        "timestamp": null
+      },
+      "positionDailyGain": {
+        "gainValue": "5.09",
+        "gainPercentage": "11.33",
+        "timestamp": null
+      },
+      "costBasis": {
+        "totalCost": "44.91",
+        "unitCost": "0.09",
+        "gainValue": "5.09",
+        "gainPercentage": "11.33",
+        "lastUpdate": "2026-03-09T17:21:04.153Z"
+      }
+    }
+  ],
+  "orders": [
+    {
+      "orderId": "66907e35-27a3-48a6-8da1-81d5405e251a",
+      "instrument": { "symbol": "GOOG", "type": "MULTI_LEG_INSTRUMENT" },
+      "createdAt": "2026-03-09T17:48:15.119332Z",
+      "type": "LIMIT",
+      "side": "BUY",
+      "status": "NEW",
+      "quantity": "1",
+      "notionalValue": null,
+      "expiration": {
+        "timeInForce": "GTD",
+        "expirationTime": "2026-03-13T19:31:00Z"
+      },
+      "limitPrice": "-0.55",
+      "stopPrice": null,
+      "closedAt": null,
+      "openCloseIndicator": null,
+      "filledQuantity": "0",
+      "averagePrice": "0.00",
+      "legs": [
+        {
+          "instrument": { "symbol": "GOOG260313P00282500", "type": "OPTION" },
+          "side": "BUY",
+          "openCloseIndicator": "OPEN",
+          "ratioQuantity": 1
+        },
+        {
+          "instrument": { "symbol": "GOOG260313P00287500", "type": "OPTION" },
+          "side": "SELL",
+          "openCloseIndicator": "OPEN",
+          "ratioQuantity": 1
+        }
+      ],
+      "rejectReason": null
+    }
+  ]
+}

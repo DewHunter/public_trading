@@ -48,7 +48,7 @@ curl -X GET \
 **Account Details**
 
 - [x] Get Account portfolio v2
-- [ ] Get history
+- [x] Get history
 
 **Instrument Details**
 

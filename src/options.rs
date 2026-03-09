@@ -158,48 +158,80 @@ impl OptionsAnalyze {
         expiration: String,
     ) -> Result<(), PublicError> {
         debug!("Fetching option chain for {equity_symbol}:{expiration}");
-        let chain = self
-            .public
-            .get_option_chain(
-                Instrument {
-                    instrument_type: InstrumentType::Equity,
-                    symbol: equity_symbol.clone(),
-                    name: None,
-                },
-                expiration,
-            )
-            .await?;
+        let instrument = Instrument {
+            instrument_type: InstrumentType::Equity,
+            symbol: equity_symbol.clone(),
+            name: None,
+        };
+        let quote = self.public.get_quotes(vec![instrument.clone()]).await?;
+        let chain = self.public.get_option_chain(instrument, expiration).await?;
 
-        let mut ops_syms: Vec<String> = chain
+        let puts_syms: Vec<String> = chain
             .puts
             .iter()
             .map(|put| put.instrument.symbol.clone())
             .collect();
-        let mut calls_syms: Vec<String> = chain
+        let calls_syms: Vec<String> = chain
             .calls
             .iter()
             .map(|call| call.instrument.symbol.clone())
             .collect();
-        ops_syms.append(&mut calls_syms);
 
-        debug!("Fetching option greeks for symbols {ops_syms:?}");
-        let greeks = self.public.get_option_greeks(&ops_syms).await?;
-        let greeks: HashMap<String, Greeks> = greeks
+        debug!("Fetching option greeks for symbols {puts_syms:?}");
+        let put_greeks = self.public.get_option_greeks(&puts_syms).await?;
+        let put_greeks: HashMap<String, Greeks> = put_greeks
+            .iter()
+            .map(|g| (g.symbol.clone(), g.greeks.clone()))
+            .collect();
+        let call_greeks = self.public.get_option_greeks(&calls_syms).await?;
+        let call_greeks: HashMap<String, Greeks> = call_greeks
             .iter()
             .map(|g| (g.symbol.clone(), g.greeks.clone()))
             .collect();
 
-        println!("Option Chain for {equity_symbol}:");
-        println!("Puts:");
+        let target_delta = 0.16;
+        let mut good_put = None;
+        let mut good_call = None;
+        let mut put_d_dist = 1.0;
+        let mut call_d_dist = 1.0;
+
         for put in &chain.puts {
-            print_op_quote(put, greeks.get(&put.instrument.symbol));
+            let gs = put_greeks.get(&put.instrument.symbol);
+            if let Some(gvs) = gs {
+                let d: f32 = gvs.delta.parse().expect("Couldnt parse delta from greeks");
+                let d_dist = (d.abs() - target_delta).abs();
+                if d_dist < put_d_dist {
+                    put_d_dist = d_dist;
+                    good_put = Some(put);
+                }
+            }
         }
-        println!("============{equity_symbol}============");
-        println!("Calls:");
         for call in &chain.calls {
-            print_op_quote(call, greeks.get(&call.instrument.symbol));
+            let gs = call_greeks.get(&call.instrument.symbol);
+            if let Some(gvs) = gs {
+                let d: f32 = gvs.delta.parse().expect("Couldnt parse delta from greeks");
+                let d_dist = (d.abs() - target_delta).abs();
+                if d_dist < call_d_dist {
+                    call_d_dist = d_dist;
+                    good_call = Some(call);
+                }
+            }
         }
-        println!("============{equity_symbol}============");
+
+        info!("============{equity_symbol}============");
+        info!("Quote: {quote:?}");
+        if let Some(put) = good_put {
+            info!("Good put:");
+            print_op_quote(put, put_greeks.get(&put.instrument.symbol));
+            let bid: f64 = put.bid.parse().unwrap();
+            info!("Put Profit data: {}...", bid);
+        }
+        if let Some(call) = good_call {
+            info!("Good Call:");
+            print_op_quote(call, call_greeks.get(&call.instrument.symbol));
+            let bid: f64 = call.bid.parse().unwrap();
+            info!("Call Profit data: {}...", bid);
+        }
 
         Ok(())
     }
@@ -211,7 +243,7 @@ fn print_op_quote(q: &Quote, g: Option<&Greeks>) {
     let ask = q.ask.clone();
     let vol = q.volume;
 
-    println!("{sym}: {bid}/{ask} Volume: {vol} {g:?}");
+    info!("{sym}: {bid}/{ask} Volume: {vol} {g:?}");
 }
 
 #[cfg(test)]
