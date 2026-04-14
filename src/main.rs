@@ -1,4 +1,5 @@
 mod cli_ops;
+mod config;
 
 use clap::Parser;
 use cli_ops::{Cli, Command};
@@ -10,6 +11,8 @@ use tracing::{Level, error, info};
 use tracing_subscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::config::Config;
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -19,6 +22,7 @@ async fn main() {
     setup_simple_log(cli.log_level);
 
     info!("Public Trading");
+    let _config = Config::new();
 
     let mut client = match PublicClient::new() {
         Ok(client) => client,
@@ -54,16 +58,17 @@ async fn main() {
 
         Command::AnalyzeOptions { symbol, expiration } => {
             let analyzer = OptionsAnalyze::new(client);
-            match analyzer.analyze_option(symbol, expiration).await {
-                Ok(()) => {}
-                Err(e) => {
-                    error!("Analyze Options error: {e:?}");
-                }
-            };
+            if let Err(e) = analyzer.analyze_option(symbol, expiration).await {
+                error!("Analyze Options error: {e:?}");
+            }
         }
 
-        Command::OptionsStopper { threshold, dry_run } => {
-            let opstop = OptionsStopper::new(client, threshold, dry_run);
+        Command::OptionsStopper {
+            threshold,
+            dry_run,
+            dry_run_exit,
+        } => {
+            let opstop = OptionsStopper::new(client, threshold, dry_run, dry_run_exit);
             match opstop.run().await {
                 Ok(()) => {}
                 Err(e) => {

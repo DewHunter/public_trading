@@ -63,7 +63,7 @@ curl -X GET \
 
 **Order Placement**
 
-- [ ] Preflight single leg
+- [WIP] Preflight single leg
 - [ ] Preflight multi leg
 - [ ] Place order
 - [ ] Place multileg order

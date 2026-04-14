@@ -1,36 +1,37 @@
 use serde::Deserialize;
 use tokio::fs;
 
-use super::{PUBLIC_CONFIG, PUBLIC_DIR};
+use public_trading::public::PUBLIC_DIR;
 use std::{env, path::PathBuf};
+use tracing::error;
 
-#[derive(Debug, Deserialize)]
+const PUBLIC_CONFIG: &str = "config.toml";
+
+#[derive(Debug, Default, Deserialize)]
 pub struct Config {
-    pub stocks: Vec<String>,
-    pub options: Vec<String>,
+    pub _stocks: Vec<String>,
+    pub _options: Vec<String>,
 }
 
 impl Config {
-    pub async fn new() -> Option<Config> {
+    pub async fn new() -> Config {
         let path = public_config_path();
         println!("finding config in {path:?}");
-        let data = match fs::read_to_string(path).await {
-            Ok(data) => data,
+        match fs::read_to_string(path).await {
+            Ok(data) => Self::from_str(data.as_str()),
             Err(e) => {
-                println!("Err public::config: {e}");
-                return None;
+                error!("Err public::config: {e}");
+                Config::default()
             }
-        };
-
-        Self::from_str(data.as_str())
+        }
     }
 
-    fn from_str(data: &str) -> Option<Config> {
+    fn from_str(data: &str) -> Config {
         match toml::from_str::<Config>(data) {
-            Ok(config) => Some(config),
+            Ok(config) => config,
             Err(e) => {
-                println!("Err public::config: {e}");
-                return None;
+                error!("Err public::config: {e}");
+                Config::default()
             }
         }
     }

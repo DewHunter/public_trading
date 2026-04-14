@@ -108,8 +108,8 @@ impl std::fmt::Display for AccountPortfolio {
                 "", "", "", "", "", "", "", ""
             )?;
             for pos in &self.positions {
-                let name = pos.instrument.name.as_deref().unwrap_or("-");
-                let name_trunc = &name[..name.len().min(28)];
+                // let name = pos.instrument.name.as_deref().unwrap_or("-");
+                // let name_trunc = &name[..name.len().min(28)];
                 let price = pos
                     .last_price
                     .as_ref()
@@ -136,7 +136,7 @@ impl std::fmt::Display for AccountPortfolio {
                     f,
                     "  {:<8}  {:<28}  {:>6}  {:>10}  {:>12}  {:>6}%  {:>9}  {:>9}",
                     pos.instrument.symbol,
-                    name_trunc,
+                    "name_trunc".to_string(),
                     pos.quantity,
                     price,
                     value,
@@ -207,7 +207,7 @@ pub struct Equity {
     pub percent_of_portfolio: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LastPrice {
     pub last_price: String,
@@ -255,13 +255,19 @@ impl Position {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderType {
+    /// Execute a trade immediately at the best available price in the market at the time the order is placed.
     Market,
+    /// Execute a trade at a specific price or better.
     Limit,
+    /// Conditionally Sell or Buy a stock once its price reaches a specified price/level.
     Stop,
+    /// Execute a trade with the combination Limit and Stop orders.
+    /// Conditionally execute with the price reaches a certain level (Stop),
+    /// and execute the triggered trade at the specified price or better (Limit).
     StopLimit,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum OrderSide {
     Buy,
@@ -403,7 +409,6 @@ pub enum InstrumentType {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Instrument {
     pub symbol: String,
-    pub name: Option<String>,
     #[serde(rename = "type")]
     pub instrument_type: InstrumentType,
 }
@@ -413,6 +418,21 @@ pub struct Instrument {
 pub enum QuoteOutcome {
     Success,
     Unknown,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneDayChange {
+    pub change: Option<String>,
+    pub percent_change: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OptionDetails {
+    pub greeks: Option<Greeks>,
+    pub strike_price: String,
+    pub mid_price: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -430,6 +450,9 @@ pub struct Quote {
     pub ask_timestamp: String,
     pub volume: u64,
     pub open_interest: Option<u64>,
+    pub previous_close: Option<String>,
+    pub one_day_change: Option<OneDayChange>,
+    pub option_details: Option<OptionDetails>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -458,13 +481,13 @@ pub struct Greeks {
     pub implied_volatility: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OptionGreeks {
     pub symbol: String,
     pub greeks: Greeks,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum OptionType {
     Call,
@@ -503,16 +526,6 @@ pub struct RegulatoryFees {
     pub exchange_fee: Option<String>,
     pub occ_fee: Option<String>,
     pub cat_fee: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OptionDetails {
-    pub base_symbol: String,
-    #[serde(rename = "type")]
-    pub option_type: OptionType,
-    pub strike_price: String,
-    pub option_expire_date: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

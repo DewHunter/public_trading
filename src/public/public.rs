@@ -26,6 +26,7 @@ pub enum PublicError {
     ServiceError(String, String),
     HttpError(String),
     InvalidUri,
+    ParseError,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -389,6 +390,10 @@ impl PublicClient {
         }
         let res = self.get_with_params(path.as_str(), &params).await?;
         let data = response!(GetHistoryResponse, res);
+        info!(
+            "PageSize: {:?}, NextToken: {:?}",
+            data.page_size, data.next_token
+        );
 
         Ok(data.transactions)
     }
@@ -499,12 +504,17 @@ pub async fn handle_response(
     };
 
     if !response.status().is_success() {
-        match response.json::<ServiceErrorMsg>().await {
-            Ok(msg) => return Err(PublicError::ServiceError(msg.error, msg.message)),
+        match response.text().await {
+            Ok(msg) => {
+                return Err(PublicError::ServiceError(
+                    "Error message from Public".to_string(),
+                    msg,
+                ));
+            }
             Err(e) => {
                 return Err(PublicError::ServiceError(
-                    "MalformedErrorJsonResponse".to_string(),
-                    format!("Couldnt parse server error {e}"),
+                    "Cannot extract text from Response".to_string(),
+                    format!("{e}"),
                 ));
             }
         }
@@ -518,10 +528,10 @@ mod tests {
     use super::*;
     use std::include_str;
 
-    const ACCOUNT_PORTFOLIO: &str = include_str!("fixtures/account_portfolio.json");
-    const OPTION_CHAIN: &str = include_str!("fixtures/option_chain.json");
-    const ACCOUNTS: &str = include_str!("fixtures/accounts.json");
-    const ACC_WITH_ORDERS: &str = include_str!("fixtures/acc_portfolio_with_orders.json");
+    const ACCOUNT_PORTFOLIO: &str = include_str!("../fixtures/account_portfolio.json");
+    const OPTION_CHAIN: &str = include_str!("../fixtures/option_chain.json");
+    const ACCOUNTS: &str = include_str!("../fixtures/accounts.json");
+    const ACC_WITH_ORDERS: &str = include_str!("../fixtures/acc_portfolio_with_orders.json");
 
     #[test]
     fn test_parse_option_chain() {

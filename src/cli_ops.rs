@@ -25,6 +25,7 @@ pub enum Command {
     AnalyzeOptions {
         /// Symbol of underlying to analyze options for
         symbol: String,
+
         /// Expiration to analyze, like "2026-02-27"
         expiration: String,
     },
@@ -33,10 +34,14 @@ pub enum Command {
     OptionsStopper {
         /// Gain-percent threshold below which a position should be exited (e.g. -200.0)
         #[arg(long, default_value = "-200.0")]
-        threshold: f32,
+        threshold: f64,
 
         /// Print actions without fetching live quotes or placing orders
         #[arg(long)]
         dry_run: bool,
+
+        /// Print actions of attempting an exit, but don't execute it.
+        #[arg(long)]
+        dry_run_exit: bool,
     },
 }

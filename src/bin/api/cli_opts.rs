@@ -25,6 +25,12 @@ pub enum Operation {
         #[arg(long)]
         next_token: Option<String>,
     },
+    GetOptionChain {
+        #[arg(long)]
+        symbol: String,
+        #[arg(long)]
+        expiration: String,
+    },
     GetOptionGreeks {
         /// Option symbols in OSI format
         /// Max 250 per request

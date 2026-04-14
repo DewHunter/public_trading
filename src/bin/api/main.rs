@@ -2,7 +2,7 @@ mod cli_opts;
 
 use clap::Parser;
 use cli_opts::{Cli, Operation};
-use public_trading::public::{PublicClient, PublicError};
+use public_trading::public::{Instrument, InstrumentType, PublicClient, PublicError};
 use rustls::crypto::CryptoProvider;
 use serde_json::json;
 use tracing::Level;
@@ -33,6 +33,14 @@ async fn main() -> Result<(), PublicError> {
                 .get_history(start, end, page_size, next_token)
                 .await?;
             println!("{:?}", history);
+        }
+        Operation::GetOptionChain { symbol, expiration } => {
+            let instrument = Instrument {
+                instrument_type: InstrumentType::Equity,
+                symbol,
+            };
+            let option_chain = client.get_option_chain(instrument, expiration).await?;
+            println!("{}", json!(option_chain));
         }
         Operation::GetOptionGreeks { symbols } => {
             let greeks = client.get_option_greeks(&symbols).await?;
