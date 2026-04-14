@@ -211,21 +211,6 @@ impl OptionsStopper {
     }
 }
 
-/// Parses an option name like "QCOM $138 Put Feb 20, '26"
-/// into a tuple of ticker, strike, option type, expiration date.
-fn _parse_option_name(name: &str) -> (String, f64, OptionType, NaiveDate) {
-    let tokens: Vec<&str> = name.split_whitespace().collect();
-
-    let ticker = tokens[0].to_string();
-    let strike: f64 = tokens[1].split_at(1).1.parse().unwrap(); // removes $
-    let op_type = tokens[2].parse().unwrap();
-
-    let date_str = format!("{} {} {}", tokens[3], tokens[4], tokens[5]);
-    let expiration = NaiveDate::parse_from_str(&date_str, "%b %d, '%y").unwrap();
-
-    (ticker, strike, op_type, expiration)
-}
-
 pub struct OptionsAnalyze {
     public: PublicClient,
 }
@@ -247,11 +232,53 @@ pub struct OptionResultData {
     pub delta: f64,
 }
 
-// impl Into<OptionResultData> for &Quote {
-//     fn into(self) -> OptionResultData {
-//         OptionResultData { opt_type: self. }
-//     }
-// }
+impl Into<OptionResultData> for &Quote {
+    fn into(self) -> OptionResultData {
+        let intrument = &self.instrument;
+        let opt_type = parse_option_type_from_symbol(&intrument.symbol);
+
+        let q_bid = self.bid.parse().expect("Cannot parse bid from quote");
+        let q_ask = self.ask.parse().expect("Cannot parse ask from quote");
+
+        let opt_details = self.option_details.as_ref().unwrap();
+        let greeks = opt_details.greeks.as_ref().unwrap();
+        let iv = greeks
+            .implied_volatility
+            .parse()
+            .expect("Cannot parse greeks");
+        let delta = greeks.delta.parse().expect("Cannot parse greeks");
+
+        OptionResultData {
+            opt_type,
+            strike: opt_details
+                .strike_price
+                .parse()
+                .expect("Cannot parse strike price"),
+            q_bid,
+            q_ask,
+            iv,
+            delta,
+        }
+    }
+}
+
+/// Gets OptionType from an option symbol like "MU260417P00830000"
+fn parse_option_type_from_symbol(symbol: &str) -> OptionType {
+    let opt_idx = symbol.len() - 9;
+    let mut chars = symbol.char_indices();
+    while let Some((idx, char)) = chars.next() {
+        if opt_idx != idx {
+            continue;
+        }
+        match char {
+            'P' => return OptionType::Put,
+            'C' => return OptionType::Call,
+            _ => break,
+        }
+    }
+
+    panic!("Could not parse OptionType from symbol <{}>", symbol);
+}
 
 impl OptionsAnalyze {
     pub fn new(client: PublicClient) -> Self {
@@ -271,29 +298,6 @@ impl OptionsAnalyze {
         let quote = self.public.get_quotes(vec![instrument.clone()]).await?;
         let chain = self.public.get_option_chain(instrument, expiration).await?;
 
-        let puts_syms: Vec<String> = chain
-            .puts
-            .iter()
-            .map(|put| put.instrument.symbol.clone())
-            .collect();
-        let calls_syms: Vec<String> = chain
-            .calls
-            .iter()
-            .map(|call| call.instrument.symbol.clone())
-            .collect();
-
-        debug!("Fetching option greeks for symbols {puts_syms:?}");
-        let put_greeks = self.public.get_option_greeks(&puts_syms).await?;
-        let put_greeks: HashMap<String, Greeks> = put_greeks
-            .iter()
-            .map(|g| (g.symbol.clone(), g.greeks.clone()))
-            .collect();
-        let call_greeks = self.public.get_option_greeks(&calls_syms).await?;
-        let call_greeks: HashMap<String, Greeks> = call_greeks
-            .iter()
-            .map(|g| (g.symbol.clone(), g.greeks.clone()))
-            .collect();
-
         let target_delta = 0.16;
         let mut good_put = None;
         let mut good_call = None;
@@ -301,53 +305,41 @@ impl OptionsAnalyze {
         let mut call_d_dist = 1.0;
 
         for put in &chain.puts {
-            let gs = put_greeks.get(&put.instrument.symbol);
-            if let Some(gvs) = gs {
-                let delta: f64 = gvs.delta.parse().map_err(|_| PublicError::ParseError)?;
-                let iv: f64 = gvs
-                    .implied_volatility
-                    .parse()
-                    .map_err(|_| PublicError::ParseError)?;
-                let q_bid: f64 = put.bid.parse().map_err(|_| PublicError::ParseError)?;
-                let q_ask: f64 = put.ask.parse().map_err(|_| PublicError::ParseError)?;
+            let details = if let Some(details) = put.option_details.as_ref() {
+                details
+            } else {
+                continue;
+            };
+            let greeks = if let Some(greeks) = details.greeks.as_ref() {
+                greeks
+            } else {
+                continue;
+            };
 
-                let d_dist = (delta.abs() - target_delta).abs();
-                if d_dist < put_d_dist {
-                    put_d_dist = d_dist;
-                    good_put = Some(OptionResultData {
-                        opt_type: OptionType::Put,
-                        strike: 0f64, // TODO: finish
-                        q_bid,
-                        q_ask,
-                        iv,
-                        delta,
-                    });
-                }
+            let delta: f64 = greeks.delta.parse().map_err(|_| PublicError::ParseError)?;
+            let d_dist = (delta.abs() - target_delta).abs();
+            if d_dist < put_d_dist {
+                put_d_dist = d_dist;
+                good_put = Some(put.into());
             }
         }
         for call in &chain.calls {
-            let gs = call_greeks.get(&call.instrument.symbol);
-            if let Some(gvs) = gs {
-                let delta: f64 = gvs.delta.parse().map_err(|_| PublicError::ParseError)?;
-                let iv: f64 = gvs
-                    .implied_volatility
-                    .parse()
-                    .map_err(|_| PublicError::ParseError)?;
-                let q_bid: f64 = call.bid.parse().map_err(|_| PublicError::ParseError)?;
-                let q_ask: f64 = call.ask.parse().map_err(|_| PublicError::ParseError)?;
+            let details = if let Some(details) = call.option_details.as_ref() {
+                details
+            } else {
+                continue;
+            };
+            let greeks = if let Some(greeks) = details.greeks.as_ref() {
+                greeks
+            } else {
+                continue;
+            };
 
-                let d_dist = (delta.abs() - target_delta).abs();
-                if d_dist < call_d_dist {
-                    call_d_dist = d_dist;
-                    good_call = Some(OptionResultData {
-                        opt_type: OptionType::Call,
-                        strike: 0f64, // TODO: finish
-                        q_bid,
-                        q_ask,
-                        iv,
-                        delta,
-                    });
-                }
+            let delta: f64 = greeks.delta.parse().map_err(|_| PublicError::ParseError)?;
+            let d_dist = (delta.abs() - target_delta).abs();
+            if d_dist < call_d_dist {
+                call_d_dist = d_dist;
+                good_call = Some(call.into());
             }
         }
 
@@ -384,12 +376,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_option_parse_from_name() {
-        let name = "QCOM $138 Put Feb 20, '26";
-        let (ticker, strike, op_type, expiration) = parse_option_name(name);
-        assert_eq!(ticker, "QCOM");
-        assert_eq!(strike, 138f64);
+    fn test_parse_option_type_from_symbol_put() {
+        let option_symbol = "MU260417P00830000";
+        let op_type = parse_option_type_from_symbol(option_symbol);
         assert_eq!(op_type, OptionType::Put);
-        assert_eq!(expiration, NaiveDate::from_ymd_opt(2026, 2, 20).unwrap());
+    }
+
+    #[test]
+    fn test_parse_option_type_from_symbol_call() {
+        let option_symbol = "LITE260417C01410000";
+        let op_type = parse_option_type_from_symbol(option_symbol);
+        assert_eq!(op_type, OptionType::Call);
     }
 }
