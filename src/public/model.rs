@@ -99,17 +99,15 @@ impl std::fmt::Display for AccountPortfolio {
             writeln!(f, "Positions ({})", self.positions.len())?;
             writeln!(
                 f,
-                "  {:<8}  {:<28}  {:>6}  {:>10}  {:>12}  {:>6}  {:>9}  {:>9}",
-                "Symbol", "Name", "Qty", "Price", "Value", "Port%", "Daily%", "Total%"
+                "  {:<20}  {:>6}  {:>10}  {:>12}  {:>6}  {:>9}  {:>9}",
+                "Symbol", "Qty", "Price", "Value", "Port%", "Daily%", "Total%"
             )?;
             writeln!(
                 f,
-                "  {:-<8}  {:-<28}  {:->6}  {:->10}  {:->12}  {:->6}  {:->9}  {:->9}",
-                "", "", "", "", "", "", "", ""
+                "  {:-<20}  {:->6}  {:->10}  {:->12}  {:->7}  {:->10}  {:->10}",
+                "", "", "", "", "", "", ""
             )?;
             for pos in &self.positions {
-                // let name = pos.instrument.name.as_deref().unwrap_or("-");
-                // let name_trunc = &name[..name.len().min(28)];
                 let price = pos
                     .last_price
                     .as_ref()
@@ -134,15 +132,8 @@ impl std::fmt::Display for AccountPortfolio {
 
                 writeln!(
                     f,
-                    "  {:<8}  {:<28}  {:>6}  {:>10}  {:>12}  {:>6}%  {:>9}  {:>9}",
-                    pos.instrument.symbol,
-                    "name_trunc".to_string(),
-                    pos.quantity,
-                    price,
-                    value,
-                    pct,
-                    daily,
-                    total
+                    "  {:<20}  {:>6}  {:>10}  {:>12}  {:>6}%  {:>9}  {:>9}",
+                    pos.instrument.symbol, pos.quantity, price, value, pct, daily, total
                 )?;
             }
         }
