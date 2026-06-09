@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use serde::Serialize;
-use std::collections::HashMap;
-use tracing::{debug, error, info};
+use std::{cmp::Ordering, collections::HashMap};
+use tracing::{debug, error, info, trace, warn};
 
 use crate::public::{
     Greeks, Instrument, InstrumentType, OptionGreeks, OptionType, OrderSide, Position,
@@ -222,23 +222,64 @@ pub struct OptionResult {
     pub good_call: Option<OptionResultData>,
 }
 
+// TODO: add expiration date
 #[derive(Debug)]
 pub struct OptionResultData {
+    pub symbol: String,
     pub opt_type: OptionType,
     pub strike: f64,
     pub q_bid: f64,
     pub q_ask: f64,
+    pub volume: u64,
     pub iv: f64,
     pub delta: f64,
+    pub gamma: f64,
+    pub theta: f64,
+    pub vega: f64,
+    pub rho: f64,
+}
+
+impl Ord for OptionResultData {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.capital_efficiency()
+            .total_cmp(&other.capital_efficiency())
+    }
+}
+
+impl PartialOrd for OptionResultData {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.capital_efficiency()
+            .partial_cmp(&other.capital_efficiency())
+    }
+}
+
+// TODO: include expiration date
+impl PartialEq for OptionResultData {
+    fn eq(&self, other: &Self) -> bool {
+        self.symbol.eq(&other.symbol)
+            && self.strike == other.strike
+            && self.capital_efficiency() == other.capital_efficiency()
+    }
+}
+
+impl Eq for OptionResultData {}
+
+impl OptionResultData {
+    fn capital_efficiency(&self) -> f64 {
+        let diff = self.q_ask - self.q_bid;
+        let realistic_price = diff / 3.0;
+        (self.q_bid + realistic_price) / self.strike
+    }
 }
 
 impl Into<OptionResultData> for &Quote {
     fn into(self) -> OptionResultData {
         let intrument = &self.instrument;
-        let opt_type = parse_option_type_from_symbol(&intrument.symbol);
+        let (symbol, opt_type) = parse_symbol_and_type_from_full_symbol(&intrument.symbol);
 
         let q_bid = self.bid.parse().expect("Cannot parse bid from quote");
         let q_ask = self.ask.parse().expect("Cannot parse ask from quote");
+        let volume = self.volume;
 
         let opt_details = self.option_details.as_ref().unwrap();
         let greeks = opt_details.greeks.as_ref().unwrap();
@@ -246,9 +287,23 @@ impl Into<OptionResultData> for &Quote {
             .implied_volatility
             .parse()
             .expect("Cannot parse greeks");
-        let delta = greeks.delta.parse().expect("Cannot parse greeks");
+        let delta = greeks
+            .delta
+            .parse()
+            .expect("Cannot parse delta from greeks");
+        let gamma = greeks
+            .gamma
+            .parse()
+            .expect("Cannot parse gamma from greeks");
+        let theta = greeks
+            .theta
+            .parse()
+            .expect("Cannot parse theta from greeks");
+        let vega = greeks.vega.parse().expect("Cannot parse vega from greeks");
+        let rho = greeks.rho.parse().expect("Cannot parse rho from greeks");
 
         OptionResultData {
+            symbol,
             opt_type,
             strike: opt_details
                 .strike_price
@@ -256,23 +311,55 @@ impl Into<OptionResultData> for &Quote {
                 .expect("Cannot parse strike price"),
             q_bid,
             q_ask,
+            volume,
             iv,
             delta,
+            gamma,
+            theta,
+            vega,
+            rho,
         }
     }
 }
 
+impl ToString for OptionResultData {
+    fn to_string(&self) -> String {
+        let opt_type = &self.opt_type;
+        let sym = &self.symbol;
+        let strike = self.strike;
+        let bid = self.q_bid;
+        let ask = self.q_ask;
+        let delta = self.delta;
+        let ce = self.capital_efficiency() * 100.0;
+
+        format!("{sym:>5} {opt_type}@${strike:<6} {bid:>5}/{ask:<5} Delta:{delta:>8} CE:{ce:.2}")
+    }
+}
+
 /// Gets OptionType from an option symbol like "MU260417P00830000"
-fn parse_option_type_from_symbol(symbol: &str) -> OptionType {
+fn parse_symbol_and_type_from_full_symbol(symbol: &str) -> (String, OptionType) {
     let opt_idx = symbol.len() - 9;
     let mut chars = symbol.char_indices();
+
+    let mut sym_done = false;
+    let mut sym_chars: Vec<char> = Vec::new();
+
     while let Some((idx, char)) = chars.next() {
+        if !sym_done {
+            if char.is_alphabetic() {
+                sym_chars.push(char);
+            } else {
+                sym_done = true;
+            }
+        }
+
         if opt_idx != idx {
             continue;
         }
+        let symbol = sym_chars.iter().collect();
         match char {
-            'P' => return OptionType::Put,
-            'C' => return OptionType::Call,
+            'P' => return (symbol, OptionType::Put),
+            'C' => return (symbol, OptionType::Call),
             _ => break,
         }
     }
@@ -285,18 +372,39 @@ impl OptionsAnalyze {
         Self { public: client }
     }
 
+    /// Collect option chain data for single instrument
+    /// returns (Calls, Puts)
+    pub async fn fetch_single_opt_data(
+        &self,
+        equity_symbol: &str,
+        expiration: &str,
+    ) -> Result<(Vec<OptionResultData>, Vec<OptionResultData>), PublicError> {
+        debug!("Fetching option chain for {equity_symbol}:{expiration}");
+        let instrument = Instrument {
+            instrument_type: InstrumentType::Equity,
+            symbol: equity_symbol.to_string(),
+        };
+        // let quote = self.public.get_quotes(vec![instrument.clone()]).await?;
+        let chain = self
+            .public
+            .get_option_chain(instrument, expiration.to_string())
+            .await?;
+
+        let calls: Vec<OptionResultData> = chain.calls.iter().map(|c| c.into()).collect();
+        let puts: Vec<OptionResultData> = chain.puts.iter().map(|c| c.into()).collect();
+
+        Ok((calls, puts))
+    }
+
+    /// TODO: ### BROKEN ###
     pub async fn analyze_option(
         &self,
         equity_symbol: String,
         expiration: String,
     ) -> Result<OptionResult, PublicError> {
-        debug!("Fetching option chain for {equity_symbol}:{expiration}");
-        let instrument = Instrument {
-            instrument_type: InstrumentType::Equity,
-            symbol: equity_symbol.clone(),
-        };
-        let quote = self.public.get_quotes(vec![instrument.clone()]).await?;
-        let chain = self.public.get_option_chain(instrument, expiration).await?;
+        let (calls, puts) = self
+            .fetch_single_opt_data(&equity_symbol, &expiration)
+            .await?;
 
         let target_delta = 0.16;
         let mut good_put = None;
@@ -304,61 +412,74 @@ impl OptionsAnalyze {
         let mut put_d_dist = 1.0;
         let mut call_d_dist = 1.0;
 
-        for put in &chain.puts {
-            let details = if let Some(details) = put.option_details.as_ref() {
-                details
-            } else {
-                continue;
-            };
-            let greeks = if let Some(greeks) = details.greeks.as_ref() {
-                greeks
-            } else {
-                continue;
-            };
-
-            let delta: f64 = greeks.delta.parse().map_err(|_| PublicError::ParseError)?;
-            let d_dist = (delta.abs() - target_delta).abs();
-            if d_dist < put_d_dist {
+        for put in puts {
+            let d_dist = (put.delta.abs() - target_delta).abs();
+            if d_dist <= put_d_dist {
                 put_d_dist = d_dist;
-                good_put = Some(put.into());
+                good_put = Some(put);
             }
         }
-        for call in &chain.calls {
-            let details = if let Some(details) = call.option_details.as_ref() {
-                details
-            } else {
-                continue;
-            };
-            let greeks = if let Some(greeks) = details.greeks.as_ref() {
-                greeks
-            } else {
-                continue;
-            };
 
-            let delta: f64 = greeks.delta.parse().map_err(|_| PublicError::ParseError)?;
-            let d_dist = (delta.abs() - target_delta).abs();
+        for call in calls {
+            let d_dist = (call.delta.abs() - target_delta).abs();
             if d_dist < call_d_dist {
                 call_d_dist = d_dist;
-                good_call = Some(call.into());
+                good_call = Some(call);
             }
         }
 
-        info!("============{equity_symbol}============");
-        info!("Quote: {quote:?}");
-        // if let Some(put) = good_put {
-        //     info!("Good put:");
-        //     print_op_quote(put, put_greeks.get(&put.instrument.symbol));
-        //     let bid: f64 = put.bid.parse().unwrap();
-        //     info!("Put Profit data: ${:.02}", bid);
-        // }
+        info!("============{}============", &equity_symbol);
         info!("Good Put: {good_put:?}");
         info!("Good Call: {good_call:?}");
+        info!("============================");
 
         Ok(OptionResult {
             symbol: equity_symbol,
             good_call,
             good_put,
         })
+    }
+
+    pub async fn analyze_options(
+        &self,
+        equities: Vec<String>,
+        expiration: String,
+    ) -> Result<(), PublicError> {
+        let target_delta = 0.16;
+        let min_volume = 10;
+        let dist = 0.02;
+        info!("Analyzing options with delta:{target_delta} delta_d:{dist} min_volume:{min_volume}");
+
+        let mut equities_with_error = Vec::new();
+        // let all_calls = Vec::new();
+        let mut all_puts = Vec::with_capacity(equities.len() * 20);
+        for ticker in &equities {
+            let (_calls, puts) = match self.fetch_single_opt_data(ticker, &expiration).await {
+                Ok((cs, ps)) => (cs, ps),
+                Err(e) => {
+                    trace!("{e:?}");
+                    equities_with_error.push(ticker);
+                    continue;
+                }
+            };
+            for p in puts {
+                debug!("Checking put {p:?}");
+                let d_dist = (p.delta.abs() - target_delta).abs();
+                if d_dist <= dist && p.volume >= min_volume {
+                    all_puts.push(p);
+                }
+            }
+        }
+
+        warn!("Skipped {equities_with_error:?}");
+
+        all_puts.sort();
+        println!();
+        all_puts
+            .iter()
+            .for_each(|put| println!("{}", put.to_string()));
+
+        Ok(())
     }
 }
 
@@ -376,16 +497,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_option_type_from_symbol_put() {
+    fn test_parse_symbol_and_type_from_full_symbol_put() {
         let option_symbol = "MU260417P00830000";
-        let op_type = parse_option_type_from_symbol(option_symbol);
+        let (symbol, op_type) = parse_symbol_and_type_from_full_symbol(option_symbol);
+        assert_eq!(symbol, "MU".to_string());
         assert_eq!(op_type, OptionType::Put);
     }
 
     #[test]
-    fn test_parse_option_type_from_symbol_call() {
+    fn test_parse_symbol_and_type_from_full_symbol_call() {
         let option_symbol = "LITE260417C01410000";
-        let op_type = parse_option_type_from_symbol(option_symbol);
+        let (symbol, op_type) = parse_symbol_and_type_from_full_symbol(option_symbol);
+        assert_eq!(symbol, "LITE".to_string());
         assert_eq!(op_type, OptionType::Call);
     }
 }

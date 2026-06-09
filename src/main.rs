@@ -56,9 +56,27 @@ async fn main() {
             }
         },
 
-        Command::AnalyzeOptions { symbol, expiration } => {
+        Command::AnalyzeOption { symbol, expiration } => {
             let analyzer = OptionsAnalyze::new(client);
             if let Err(e) = analyzer.analyze_option(symbol, expiration).await {
+                error!("Analyze Option error: {e:?}");
+            }
+        }
+
+        Command::AnalyzeOptions {
+            expiration,
+            equities_group,
+        } => {
+            let analyzer = OptionsAnalyze::new(client);
+            let config = Config::new().await.unwrap();
+            let equities = if let Some(e) = config.get(&equities_group) {
+                e
+            } else {
+                error!("Config doesnt contain group \"{equities_group}\"");
+                return;
+            };
+
+            if let Err(e) = analyzer.analyze_options(equities, expiration).await {
                 error!("Analyze Options error: {e:?}");
             }
         }

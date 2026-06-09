@@ -7,7 +7,7 @@ use reqwest::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{Value, json};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use tracing::{debug, error, info};
 
@@ -447,6 +447,25 @@ impl PublicClient {
         let res = self.post(path.as_str(), &request).await?;
 
         let option_chain = response!(OptionChain, res);
+
+        Ok(option_chain)
+    }
+
+    /// ## Get Bars V2
+    /// Fetch bar data for a given symbol and period
+    pub async fn get_bars_v2(
+        &self,
+        instrument: Instrument,
+        period: BarsPeriod,
+        _purchase_date: String,
+    ) -> Result<Value, PublicError> {
+        let symbol = instrument.symbol;
+        let instrument_type = instrument.instrument_type;
+
+        let path = format!("/userapigateway/historicdata/{instrument_type}/{symbol}/{period}");
+        let res = self.get(path.as_str()).await?;
+
+        let option_chain = response!(Value, res);
 
         Ok(option_chain)
     }

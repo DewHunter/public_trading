@@ -1,39 +1,54 @@
+use anyhow::{Result, bail};
 use serde::Deserialize;
 use tokio::fs;
 
-use public_trading::public::PUBLIC_DIR;
 use std::{env, path::PathBuf};
-use tracing::error;
+use toml::Value;
 
+const PUBLIC_DIR: &str = ".public";
 const PUBLIC_CONFIG: &str = "config.toml";
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
-    pub _stocks: Vec<String>,
-    pub _options: Vec<String>,
+    // pub stocks: Vec<String>,
+    // pub options: Vec<String>,
+    data: Value,
 }
 
 impl Config {
-    pub async fn new() -> Config {
+    pub async fn new() -> Result<Config> {
         let path = public_config_path();
         println!("finding config in {path:?}");
-        match fs::read_to_string(path).await {
-            Ok(data) => Self::from_str(data.as_str()),
-            Err(e) => {
-                error!("Err public::config: {e}");
-                Config::default()
-            }
-        }
+        let data = fs::read_to_string(path).await?;
+        Self::from_str(data.as_str())
     }
 
-    fn from_str(data: &str) -> Config {
-        match toml::from_str::<Config>(data) {
-            Ok(config) => config,
+    fn from_str(data: &str) -> Result<Config> {
+        let value = match toml::from_str(data) {
+            Ok(v) => v,
             Err(e) => {
-                error!("Err public::config: {e}");
-                Config::default()
+                bail!("Err public::config: {e}");
+            }
+        };
+
+        Ok(Config { data: value })
+    }
+
+    pub fn get(&self, field: &str) -> Option<Vec<String>> {
+        if let Some(val) = self.data.get(field) {
+            if let Some(array) = val.as_array() {
+                return Some(
+                    array
+                        .iter()
+                        .map(Value::as_str)
+                        .filter_map(|s| s)
+                        .map(|s| s.to_string())
+                        .collect::<Vec<String>>(),
+                );
             }
         }
+
+        None
     }
 }
 
@@ -53,9 +68,6 @@ mod tests {
     #[test]
     fn test_config_parse() {
         let config = Config::from_str(TEST_CONFIG);
-        assert!(config.is_some());
-        let config = config.unwrap();
-
         assert_eq!(config.stocks, vec!["AAPL"]);
         assert_eq!(config.options.len(), 7);
     }

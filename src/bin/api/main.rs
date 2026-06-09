@@ -46,6 +46,20 @@ async fn main() -> Result<(), PublicError> {
             let greeks = client.get_option_greeks(&symbols).await?;
             println!("{}", json!(greeks));
         }
+        Operation::GetBarsV2 {
+            symbol,
+            instrument_type,
+            period,
+        } => {
+            let instrument = Instrument {
+                symbol,
+                instrument_type,
+            };
+            let bars = client
+                .get_bars_v2(instrument, period, String::new())
+                .await?;
+            println!("{}", json!(bars));
+        }
     }
 
     Ok(())

@@ -21,13 +21,22 @@ pub enum Command {
         json: bool,
     },
 
-    /// Analyze Options to choose good entries
-    AnalyzeOptions {
+    /// Analyze single Option to choose good entries
+    AnalyzeOption {
         /// Symbol of underlying to analyze options for
         symbol: String,
 
         /// Expiration to analyze, like "2026-02-27"
         expiration: String,
+    },
+
+    /// Analyze Options from multiple Equities to choose good entries
+    AnalyzeOptions {
+        /// Expiration to analyze, like "2026-02-27"
+        expiration: String,
+        /// Group of equities to analyze, read from config file.
+        #[arg(short = 'g')]
+        equities_group: String,
     },
 
     /// Monitor open options positions and suggest or execute exits

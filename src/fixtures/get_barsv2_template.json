@@ -1,0 +1,72 @@
+{
+  "symbol": "string",
+  "period": "string",
+  "totalExpectedBars": 123,
+  "previousClosePrice": "string",
+  "totalGainLoss": "string",
+  "totalGainLossPercentage": "string",
+  "preMarket": {
+    "expectedBars": 123,
+    "bars": [
+      {
+        "timestamp": "string",
+        "open": "string",
+        "close": "string",
+        "high": "string",
+        "low": "string",
+        "value": "string",
+        "volume": 123,
+        "gainAmount": "string",
+        "gainPercentage": "string"
+      }
+    ]
+  },
+  "regularMarket": {
+    "expectedBars": 123,
+    "bars": [
+      {
+        "timestamp": "string",
+        "open": "string",
+        "close": "string",
+        "high": "string",
+        "low": "string",
+        "value": "string",
+        "volume": 123,
+        "gainAmount": "string",
+        "gainPercentage": "string"
+      }
+    ]
+  },
+  "afterMarket": {
+    "expectedBars": 123,
+    "bars": [
+      {
+        "timestamp": "string",
+        "open": "string",
+        "close": "string",
+        "high": "string",
+        "low": "string",
+        "value": "string",
+        "volume": 123,
+        "gainAmount": "string",
+        "gainPercentage": "string"
+      }
+    ]
+  },
+  "lastTradingSessionClose": {
+    "close": "string",
+    "closeDate": "string",
+    "change": "string",
+    "percentChange": "string"
+  },
+  "regularSessionClosingData": {
+    "timestamp": "string",
+    "price": "string"
+  },
+  "lastRegularTradingSessionClose": {
+    "close": "string",
+    "closeDate": "string",
+    "change": "string",
+    "percentChange": "string"
+  }
+}

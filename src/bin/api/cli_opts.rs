@@ -1,5 +1,7 @@
+use std::str::FromStr;
+
 use clap::{Parser, Subcommand};
-use public_trading::public::AccountType;
+use public_trading::public::{AccountType, BarsPeriod, InstrumentType};
 
 #[derive(Parser, Debug)]
 #[command(name = "api", about = "Public.com API CLI")]
@@ -36,5 +38,13 @@ pub enum Operation {
         /// Max 250 per request
         #[arg(long)]
         symbols: Vec<String>,
+    },
+    GetBarsV2 {
+        #[arg(long)]
+        symbol: String,
+        #[arg(long, value_parser = InstrumentType::from_str, default_value_t = InstrumentType::Equity)]
+        instrument_type: InstrumentType,
+        #[arg(long)]
+        period: BarsPeriod,
     },
 }

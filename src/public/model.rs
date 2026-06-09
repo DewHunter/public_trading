@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -397,6 +397,43 @@ pub enum InstrumentType {
     Index,
 }
 
+impl FromStr for InstrumentType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Equity" => Ok(Self::Equity),
+            "EQUITY" => Ok(Self::Equity),
+            "Option" => Ok(Self::Option),
+            "OPTION" => Ok(Self::Option),
+            "MultiLegInstrument" => Ok(Self::MultiLegInstrument),
+            "Crypto" => Ok(Self::Crypto),
+            "CRYPTO" => Ok(Self::Crypto),
+            "Alt" => Ok(Self::Alt),
+            "Treasury" => Ok(Self::Treasury),
+            "Bond" => Ok(Self::Bond),
+            "Index" => Ok(Self::Index),
+            "INDEX" => Ok(Self::Index),
+            _ => Err(format!("Unknown type")),
+        }
+    }
+}
+
+impl fmt::Display for InstrumentType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InstrumentType::Equity => write!(f, "EQUITY"),
+            InstrumentType::Option => write!(f, "OPTION"),
+            InstrumentType::MultiLegInstrument => write!(f, "MULTI_LEG_INSTRUMENT"),
+            InstrumentType::Crypto => write!(f, "CRYPTO"),
+            InstrumentType::Alt => write!(f, "ALT"),
+            InstrumentType::Treasury => write!(f, "TREASURY"),
+            InstrumentType::Bond => write!(f, "BOND"),
+            InstrumentType::Index => write!(f, "INDEX"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Instrument {
     pub symbol: String,
@@ -478,7 +515,7 @@ pub struct OptionGreeks {
     pub greeks: Greeks,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum OptionType {
     Call,
@@ -547,4 +584,48 @@ pub struct PriceIncrement {
     pub increment_below_3: Option<String>,
     pub increment_above_3: Option<String>,
     pub current_increment: Option<String>,
+}
+
+#[derive(Debug, Clone, clap::ValueEnum, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum BarsPeriod {
+    Day,
+    Week,
+    Month,
+    Quarter,
+    HalfYear,
+    Year,
+    FiveYears,
+    Ytd,
+    SincePurchase,
+}
+
+impl std::fmt::Display for BarsPeriod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            Self::Day => write!(f, "DAY"),
+            Self::Week => write!(f, "WEEK"),
+            Self::Month => write!(f, "MONTH"),
+            Self::Quarter => write!(f, "QUARTER"),
+            Self::HalfYear => write!(f, "HALF_YEAR"),
+            Self::Year => write!(f, "YEAR"),
+            Self::FiveYears => write!(f, "FIVE_YEARS"),
+            Self::Ytd => write!(f, "YTD"),
+            Self::SincePurchase => write!(f, "SINCE_PURCHASE"),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Bar {
+    pub timestamp: Option<String>,
+    pub open: Option<String>,
+    pub close: Option<String>,
+    pub high: Option<String>,
+    pub low: Option<String>,
+    pub value: Option<String>,
+    pub volume: i32,
+    pub gain_amount: Option<String>,
+    pub gain_percentage: Option<String>,
 }
