@@ -8,14 +8,16 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{collections::HashMap, sync::Arc};
+use tokio::sync::Mutex;
 use tracing::{debug, error, info};
 
+#[derive(Clone)]
 pub struct PublicClient {
     client: Client,
     base_url: Url,
     account_id: Option<String>,
-    creds: Rc<RefCell<Creds>>,
+    creds: Arc<Mutex<Creds>>,
 }
 
 #[derive(Debug)]
@@ -191,7 +193,7 @@ impl PublicClient {
             client,
             base_url: PUBLIC_API.parse().unwrap(),
             account_id: None,
-            creds: Rc::new(RefCell::new(Creds::new())),
+            creds: Arc::new(Mutex::new(Creds::new())),
         })
     }
 
@@ -328,20 +330,23 @@ impl PublicClient {
     }
 
     async fn access_token(&self) -> Result<String, PublicError> {
-        if let Some(token) = self.creds.borrow().access_token() {
-            return Ok(token.to_string());
-        }
-        info!("Generating a new public token");
+        let (public_secret, ttl) = {
+            let creds = self.creds.lock().await;
+            if let Some(token) = creds.access_token() {
+                return Ok(token.to_string());
+            }
+            info!("Generating a new public token");
 
-        let public_secret = self.creds.borrow().public_secret().await.map_err(|e| {
-            error!("Missing public secret: {e}");
-            PublicError::MissingCredentials
-        })?;
+            let public_secret = creds.public_secret().await.map_err(|e| {
+                error!("Missing public secret: {e}");
+                PublicError::MissingCredentials
+            })?;
 
-        let public_token = self
-            .create_personal_token(public_secret, self.creds.borrow().ttl())
-            .await?;
-        self.creds.borrow_mut().refresh(public_token.as_str());
+            (public_secret, creds.ttl())
+        };
+
+        let public_token = self.create_personal_token(public_secret, ttl).await?;
+        self.creds.lock().await.refresh(public_token.as_str());
 
         Ok(public_token)
     }

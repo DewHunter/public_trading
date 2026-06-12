@@ -67,8 +67,8 @@ mod tests {
 
     #[test]
     fn test_config_parse() {
-        let config = Config::from_str(TEST_CONFIG);
-        assert_eq!(config.stocks, vec!["AAPL"]);
-        assert_eq!(config.options.len(), 7);
+        let config = Config::from_str(TEST_CONFIG).unwrap();
+        assert_eq!(config.get("stocks"), Some(vec!["AAPL".to_string()]));
+        assert_eq!(config.get("options").unwrap().len(), 7);
     }
 }

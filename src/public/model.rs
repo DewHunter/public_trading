@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
+use ts_rs::TS;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -11,7 +12,8 @@ pub struct Account {
     pub trade_permissions: TradePermissions,
 }
 
-#[derive(Debug, Clone, clap::ValueEnum, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, clap::ValueEnum, Deserialize, Serialize, PartialEq, TS)]
+#[ts(export)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AccountType {
     Brokerage,
@@ -50,7 +52,8 @@ pub enum TradePermissions {
     RestrictedNoTrading,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
+#[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountPortfolio {
     pub account_id: String,
@@ -158,8 +161,9 @@ impl std::fmt::Display for AccountPortfolio {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct BuyingPower {
     pub cash_only_buying_power: String,
     pub buying_power: String,
@@ -177,8 +181,9 @@ pub enum SecurityType {
     Bond,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
 pub enum EquityType {
     Cash,
     JikoAccount,
@@ -189,8 +194,9 @@ pub enum EquityType {
     Crypto,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct Equity {
     #[serde(rename = "type")]
     pub equity_type: EquityType,
@@ -198,23 +204,26 @@ pub struct Equity {
     pub percent_of_portfolio: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct LastPrice {
     pub last_price: String,
     pub timestamp: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct DailyGain {
     pub gain_value: String,
     pub gain_percentage: String,
     pub timestamp: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct CostBasis {
     pub total_cost: String,
     pub unit_cost: String,
@@ -223,8 +232,9 @@ pub struct CostBasis {
     pub last_update: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct Position {
     pub instrument: Instrument,
     pub quantity: String,
@@ -243,8 +253,9 @@ impl Position {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
 pub enum OrderType {
     /// Execute a trade immediately at the best available price in the market at the time the order is placed.
     Market,
@@ -258,15 +269,17 @@ pub enum OrderType {
     StopLimit,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "UPPERCASE")]
+#[ts(export)]
 pub enum OrderSide {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
 pub enum OrderStatus {
     New,
     PartiallyFilled,
@@ -280,28 +293,32 @@ pub enum OrderStatus {
     Replaced,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "UPPERCASE")]
+#[ts(export)]
 pub enum TimeInForce {
     Day,
     Gtd,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct Expiration {
     pub time_in_force: TimeInForce,
     pub expiration_time: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "UPPERCASE")]
+#[ts(export)]
 pub enum OPIndicator {
     Open,
     Close,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
+#[ts(export)]
 pub struct Leg {
     pub instrument: Instrument,
     pub side: OrderSide,
@@ -309,8 +326,9 @@ pub struct Leg {
     pub ratio_quantity: Option<i64>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct Order {
     pub order_id: String,
     pub instrument: Instrument,
@@ -384,8 +402,9 @@ enum HistoryTransactionDirection {
     Outgoing,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
 pub enum InstrumentType {
     Equity,
     Option,
@@ -434,7 +453,8 @@ impl fmt::Display for InstrumentType {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, TS)]
+#[ts(export)]
 pub struct Instrument {
     pub symbol: String,
     #[serde(rename = "type")]

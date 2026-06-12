@@ -73,3 +73,12 @@ curl -X GET \
 **Option Details**
 
 - [x] Get option greeks
+
+## Webapp
+
+```bash
+cd webapp
+bun install
+bunx --bun shadcn@latest add button
+bun run dev
+```
